@@ -1,0 +1,4 @@
+quantities==0.13.0
+xlsx2csv==0.7.8
+pyyaml==6.0
+git+https://github.com/ioos/ioos_qc.git@2.0.1#egg=ioos_qc
