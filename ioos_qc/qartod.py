@@ -659,7 +659,6 @@ def flat_line_test(
         return np.ma.masked_invalid(arr[:-1, :])
 
     def run_test(test_threshold, flag_value):
-        print(test_threshold, time_interval)
         # convert time thresholds to number of observations
         count = (int(test_threshold) / time_interval).astype(int)
 

@@ -1,5 +1,4 @@
 #! /usr/bin/python
-# -*- coding: utf-8 -*-
 import argparse
 import csv
 import datetime
@@ -51,7 +50,13 @@ class Notifier:
     """Send SMTP notification"""
 
     def __init__(
-        self, _host: str, _from: str, _to: list, _cc: list, subj: str, msg: str
+        self,
+        _host: str,
+        _from: str,
+        _to: list,
+        _cc: list,
+        subj: str,
+        msg: str,
     ) -> None:
         self._from = _from
         self._to = _to
@@ -71,7 +76,8 @@ class Notifier:
                 server.sendmail(self._from, self._to + self._cc, self.message)
         except Exception:
             raise ScriptError(
-                ERROR_LEVEL[1], "Failed to send notification email using SMTP."
+                ERROR_LEVEL[1],
+                "Failed to send notification email using SMTP.",
             )
 
 
@@ -151,7 +157,7 @@ def ncdump(nc_fid, log, verb=True):
             for ncattr in nc_fid.variables[key].ncattrs():
                 log.info(
                     "\t\t%s: %s"
-                    % (ncattr, repr(nc_fid.variables[key].getncattr(ncattr)))
+                    % (ncattr, repr(nc_fid.variables[key].getncattr(ncattr))),
                 )
         except KeyError:
             log.info("\t\tWARNING: %s does not contain variable attributes" % key)
@@ -161,7 +167,7 @@ def ncdump(nc_fid, log, verb=True):
     if verb:
         log.info("NetCDF Global Attributes:")
         for nc_attr in nc_attrs:
-            log.info("\t%s: %s" % (nc_attr, repr(nc_fid.getncattr(nc_attr))))
+            log.info(f"\t{nc_attr}: {repr(nc_fid.getncattr(nc_attr))}")
     nc_dims = [dim for dim in nc_fid.dimensions]  # list of nc dimensions
     # Dimension shape information.
     if verb:
@@ -204,7 +210,8 @@ def start_logging(log_dir) -> logging.Logger:
         format="%(asctime)s : %(msecs)04d : %(levelname)s : %(message)s",
         filename=(
             os.path.join(
-                log_dir, f"log_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+                log_dir,
+                f"log_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.log",
             )
         ),
         filemode="w",
@@ -221,11 +228,11 @@ def log_preamble(log: logging.Logger, **kwargs) -> None:
         % (
             datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S %p"),
             datetime.datetime.now().astimezone().tzinfo,
-        )
+        ),
     )
     if len(kwargs) > 0:
         for arg in kwargs:
-            log.info("%s: %s" % (arg, kwargs[arg]))
+            log.info(f"{arg}: {kwargs[arg]}")
 
 
 class UnicodeReader:
@@ -263,18 +270,22 @@ class FileParser:
         """Determine file dialect and encoding, then create
         and return a reader object"""
         try:
-            dialect = csv.Sniffer().sniff(open(self.filename, "rt").readline())
+            dialect = csv.Sniffer().sniff(open(self.filename).readline())
         except Exception:
             ScriptError(
-                ERROR_LEVEL[2], "Can't open file to determine format.", self.filename
+                ERROR_LEVEL[2],
+                "Can't open file to determine format.",
+                self.filename,
             )
         try:
             if self.encoding:
                 reader = UnicodeReader(
-                    open(self.filename, "rt"), dialect, self.encoding
+                    open(self.filename),
+                    dialect,
+                    self.encoding,
                 )
             else:
-                reader = csv.reader(open(self.filename, "rt"), dialect)
+                reader = csv.reader(open(self.filename), dialect)
         except Exception:
             ScriptError(ERROR_LEVEL[2], "Can't open file to read data.", self.filename)
         if self.headrows > 0:
@@ -283,7 +294,9 @@ class FileParser:
                     next(reader)
             except Exception:
                 ScriptError(
-                    ERROR_LEVEL[2], "Can't read column header line.", self.filename
+                    ERROR_LEVEL[2],
+                    "Can't read column header line.",
+                    self.filename,
                 )
         self.cols = next(reader)
         try:
@@ -352,17 +365,17 @@ class MakeDataFrame:
         for col in range(len(self.cols)):
             if col == 0:
                 self.df[self.df.columns[col]] = self.df[self.df.columns[col]].astype(
-                    "datetime64"
+                    "datetime64",
                 )
                 self.df[self.df.columns[col]] = self.df[
                     self.df.columns[col]
-                ] - datetime.datetime(2010, 1, 1, 0, 0)
+                ] - datetime.datetime(1970, 1, 1, 0, 0)
                 self.df[self.df.columns[col]] = self.df[
                     self.df.columns[col]
                 ].dt.total_seconds()
             else:
                 self.df[self.df.columns[col]] = self.df[self.df.columns[col]].astype(
-                    "float"
+                    "float",
                 )
 
     def parameter_dataframe(self):
@@ -376,11 +389,11 @@ class MakeDataFrame:
         for col in range(len(self.cols)):
             if "value" in self.cols[col]:
                 self.df[self.df.columns[col]] = self.df[self.df.columns[col]].astype(
-                    "float"
+                    "float",
                 )
             else:
                 self.df[self.df.columns[col]] = self.df[self.df.columns[col]].astype(
-                    "str"
+                    "str",
                 )
 
 
@@ -390,7 +403,8 @@ def convert_xlsx(file: str) -> str:
         raise ScriptError(ERROR_LEVEL[2], "The input file does not exist.", file)
     filename_noext = os.path.splitext(os.path.basename(os.path.abspath(file)))[0]
     output_csv = os.path.join(
-        os.path.dirname(os.path.abspath(file)), f"{filename_noext}.csv"
+        os.path.dirname(os.path.abspath(file)),
+        f"{filename_noext}.csv",
     )
     xl.Xlsx2csv(file).convert(output_csv, sheetid=2)
     return output_csv
@@ -417,11 +431,11 @@ class NetCDF:
         # self.rootgrp.sensor_sn = sensor_sn
 
     def operational_variables(self, data):
-        tim_dim = self.rootgrp.createDimension("time", None)
+        self.rootgrp.createDimension("time", None)
         tim = self.rootgrp.createVariable("time", np.dtype("float64").char, ("time",))
-        tim.long_name = "Time (PST) as Seconds Since 2010-01-01 00:00:00"
+        tim.long_name = "Time (PST) as Seconds Since 1970-01-01 00:00:00"
         tim.standard_name = "time"
-        tim.units = "seconds since 2010-01-01 00:00:00"
+        tim.units = "seconds since 1970-01-01 00:00:00"
         tim.time_zone = "PST"
         tim.calendar = "standard"
         tim[:] = data.df["Date / Time"]
@@ -474,7 +488,7 @@ def syntax_test(times, failed_rows):
     return flags
 
 
-class SensorQC(object):
+class SensorQC:
     def __init__(self, data, config_params, ncfile, syntax_test_failed_rows):
         self.data = data
         self.params = config_params
@@ -495,7 +509,10 @@ class SensorQC(object):
 
         variable_name = name
         ncvar = self.ncfile.createVariable(
-            variable_name, np.float64, dims, fill_value=np.int8(9)
+            variable_name,
+            np.float64,
+            dims,
+            fill_value=np.int8(9),
         )
         ncvar.source_name = source_name
         ncvar.units = units
@@ -507,7 +524,7 @@ class SensorQC(object):
 
     def find_qc_flags(self, ncvariable):
         """
-        Returns a list of non-GliderDAC QC flags associated with a variable
+        Returns a list of QC flags associated with a variable
 
         :param netCDF4.Variable ncvariable: Variable to get the status flag
                                             variables for
@@ -665,14 +682,17 @@ class SensorQC(object):
 
             if variable_name not in geophysical_variables()["qartod"]:
                 ncvar = self.ncfile.createVariable(
-                    variable_name, np.int8, dims, fill_value=np.int8(9)
+                    variable_name,
+                    np.int8,
+                    dims,
+                    fill_value=np.int8(9),
                 )
             else:
                 ncvar = self.ncfile.variables[variable_name]
 
             ncvar.units = "1"
             ncvar.standard_name = template["standard_name"] % {
-                "standard_name": standard_name
+                "standard_name": standard_name,
             }
             ncvar.long_name = template["long_name"] % {"standard_name": standard_name}
             ncvar.flag_values = template["flag_values"]
@@ -731,26 +751,30 @@ class SensorQC(object):
 
         if qartod_test == "location":
             test_params["lat"] = self.ncfile.get_variables_by_attributes(
-                standard_name="latitude"
+                standard_name="latitude",
             )[0][:]
             test_params["lon"] = self.ncfile.get_variables_by_attributes(
-                standard_name="longitude"
+                standard_name="longitude",
             )[0][:]
             test_params["bbox"] = tuple(
                 [
                     op_config.loc[
-                        op_config["parameter"] == "long_min", "parameter_value"
+                        op_config["parameter"] == "long_min",
+                        "parameter_value",
                     ].iloc[0],
                     op_config.loc[
-                        op_config["parameter"] == "lat_min", "parameter_value"
+                        op_config["parameter"] == "lat_min",
+                        "parameter_value",
                     ].iloc[0],
                     op_config.loc[
-                        op_config["parameter"] == "long_max", "parameter_value"
+                        op_config["parameter"] == "long_max",
+                        "parameter_value",
                     ].iloc[0],
                     op_config.loc[
-                        op_config["parameter"] == "lat_max", "parameter_value"
+                        op_config["parameter"] == "lat_max",
+                        "parameter_value",
                     ].iloc[0],
-                ]
+                ],
             )
 
         if qartod_test == "rate_of_change":
@@ -760,10 +784,14 @@ class SensorQC(object):
             # dates = np.array(nc.num2date(times, time_units), dtype="datetime64[ms]")
             test_params["tinp"] = ma.getdata(times[~mask])
             n_dev = qa_config.loc[
-                qa_config["parameter"] == "n_deviation", "parameter_value"
+                qa_config["parameter"] == "n_deviation",
+                "parameter_value",
             ].iloc[0]
             test_params["threshold"] = self.get_rate_of_change_threshold(
-                ma.getdata(values[~mask]), ma.getdata(times[~mask]), time_units, n_dev
+                ma.getdata(values[~mask]),
+                ma.getdata(times[~mask]),
+                time_units,
+                n_dev,
             )
 
         if qartod_test == "climatological":
@@ -780,18 +808,20 @@ class SensorQC(object):
                             nc.num2date(times, self.ncfile.variables["time"].units),
                             dtype="datetime64[ms]",
                         ).max(),
-                    ]
+                    ],
                 ),
                 # Valid value range
                 vspan=tuple(
                     [
                         qa_config.loc[
-                            qa_config["parameter"] == "climate_min", "parameter_value"
+                            qa_config["parameter"] == "climate_min",
+                            "parameter_value",
                         ].iloc[0],
                         qa_config.loc[
-                            qa_config["parameter"] == "climate_max", "parameter_value"
+                            qa_config["parameter"] == "climate_max",
+                            "parameter_value",
                         ].iloc[0],
-                    ]
+                    ],
                 ),
             )
             test_params["config"] = cc
@@ -802,10 +832,12 @@ class SensorQC(object):
         if qartod_test == "spike":
             test_params["inp"] = ma.getdata(times[~mask])
             test_params["suspect_threshold"] = qa_config.loc[
-                qa_config["parameter"] == "spike_low", "parameter_value"
+                qa_config["parameter"] == "spike_low",
+                "parameter_value",
             ].iloc[0]
             test_params["fail_threshold"] = qa_config.loc[
-                qa_config["parameter"] == "spike_high", "parameter_value"
+                qa_config["parameter"] == "spike_high",
+                "parameter_value",
             ].iloc[0]
 
         if qartod_test == "gross_range":
@@ -813,22 +845,26 @@ class SensorQC(object):
             test_params["fail_span"] = tuple(
                 [
                     qa_config.loc[
-                        qa_config["parameter"] == "sensor_min", "parameter_value"
+                        qa_config["parameter"] == "sensor_min",
+                        "parameter_value",
                     ].iloc[0],
                     qa_config.loc[
-                        qa_config["parameter"] == "sensor_max", "parameter_value"
+                        qa_config["parameter"] == "sensor_max",
+                        "parameter_value",
                     ].iloc[0],
-                ]
+                ],
             )
             test_params["suspect_span"] = tuple(
                 [
                     qa_config.loc[
-                        qa_config["parameter"] == "climate_min", "parameter_value"
+                        qa_config["parameter"] == "climate_min",
+                        "parameter_value",
                     ].iloc[0],
                     qa_config.loc[
-                        qa_config["parameter"] == "climate_max", "parameter_value"
+                        qa_config["parameter"] == "climate_max",
+                        "parameter_value",
                     ].iloc[0],
-                ]
+                ],
             )
 
         if qartod_test == "valid_range":
@@ -836,25 +872,30 @@ class SensorQC(object):
             test_params["valid_span"] = tuple(
                 [
                     qa_config.loc[
-                        qa_config["parameter"] == "sensor_min", "parameter_value"
+                        qa_config["parameter"] == "sensor_min",
+                        "parameter_value",
                     ].iloc[0],
                     qa_config.loc[
-                        qa_config["parameter"] == "sensor_max", "parameter_value"
+                        qa_config["parameter"] == "sensor_max",
+                        "parameter_value",
                     ].iloc[0],
-                ]
+                ],
             )
 
         if qartod_test == "flat_line":
             test_params["inp"] = ma.getdata(values[~mask])
             test_params["tinp"] = ma.getdata(times[~mask])
             test_params["suspect_threshold"] = qa_config.loc[
-                qa_config["parameter"] == "rep_cnt_susp", "parameter_value"
+                qa_config["parameter"] == "rep_cnt_susp",
+                "parameter_value",
             ].iloc[0]
             test_params["fail_threshold"] = qa_config.loc[
-                qa_config["parameter"] == "rep_cnt_fail", "parameter_value"
+                qa_config["parameter"] == "rep_cnt_fail",
+                "parameter_value",
             ].iloc[0]
             test_params["tolerance"] = qa_config.loc[
-                qa_config["parameter"] == "eps", "parameter_value"
+                qa_config["parameter"] == "eps",
+                "parameter_value",
             ].iloc[0]
 
         if qartod_test == "pressure":
@@ -868,13 +909,16 @@ class SensorQC(object):
             test_params["inp"] = ma.getdata(values[~mask])
             test_params["tinp"] = ma.getdata(times[~mask])
             test_params["suspect_threshold"] = qa_config.loc[
-                qa_config["parameter"] == "climate_min", "parameter_value"
+                qa_config["parameter"] == "climate_min",
+                "parameter_value",
             ].iloc[0]
             test_params["fail_threshold"] = qa_config.loc[
-                qa_config["parameter"] == "climate_max", "parameter_value"
+                qa_config["parameter"] == "climate_max",
+                "parameter_value",
             ].iloc[0]
             test_params["min_obs"] = qa_config.loc[
-                qa_config["parameter"] == "rep_cnt_susp", "parameter_value"
+                qa_config["parameter"] == "rep_cnt_susp",
+                "parameter_value",
             ].iloc[0]
 
         if qartod_test == "climatological":
@@ -903,7 +947,11 @@ class SensorQC(object):
                 ncvariable.setncattr(test_param, test_params[test_param])
 
     def get_rate_of_change_threshold(
-        self, values, times, time_units="seconds since 1970-01-01T00:00:00Z", n_dev=3
+        self,
+        values,
+        times,
+        time_units="seconds since 1970-01-01T00:00:00Z",
+        n_dev=3,
     ):
         """
         Return the threshold used for the rate of change test
@@ -922,13 +970,15 @@ class SensorQC(object):
             thresh_rate = thresh / np.median(np.diff(times))
 
         # Set the python time quantity
-        time_quantity = pq.second  # Set default
+        time_quantity = pq.second  # Set default  # noqa
         if "minute" in time_units:
-            time_quantity = pq.minute
+            time_quantity = pq.minute  # noqa
         elif "hour" in time_units:
-            time_quantity = pq.hour
+            time_quantity = pq.hour  # noqa
         elif "day" in time_units:
-            time_quantity = pq.day
+            time_quantity = pq.day  # noqa
+        else:
+            time_quantity = pq.second  # noqa
 
         return thresh_rate
 
@@ -991,7 +1041,6 @@ def run_qc(log, data, params, ncfile, syntax_test_failed_rows):
             ncvar = geophysical_variables()[group][varname]
             log.info("~" * 75)
             log.info("INSPECTING -- %s | %s", varname, ncvar)
-            # log.info("=" * 75)
 
             if group != "qartod":
                 log.info("%s does not need QARTOD", varname)
@@ -1029,7 +1078,9 @@ def main() -> None:
         raise ScriptError(ERROR_LEVEL[2], "The [header_rows] argument is invalid.")
     if not os.path.exists(sensor_file):
         raise ScriptError(
-            ERROR_LEVEL[2], "The input sensor file does not exist.", sensor_file
+            ERROR_LEVEL[2],
+            "The input sensor file does not exist.",
+            sensor_file,
         )
 
     # Abstract some variables based on input arguments
@@ -1068,7 +1119,9 @@ def main() -> None:
     log.info("~" * 75)
     log.info("EVALUATING INPUT FILE")
     sensor_obj = FileParser(
-        fname=sensor_file, header_rows=num_headerrows, column_delimiter="\t"
+        fname=sensor_file,
+        header_rows=num_headerrows,
+        column_delimiter="\t",
     )
     log.info(sensor_obj.filestats())
     log.info("~" * 75)
