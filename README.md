@@ -34,6 +34,18 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
 
   > [ioos_qc](https://github.com/ioos/ioos_qc) was cloned to the current repository on version 2.0.1 and modified for project requirements. See the [notes](#notes) section for specifics.
 
+- Activate environment
+
+  ```bash
+  source ./env/bin/activate
+  ```
+
+- Install pre-commit hooks
+
+  ```bash
+  pre-commit install
+  ```
+
 - As of **2022-06-20** a few extra steps are needed to use the Python NetCDF4 module on Apple Silicon.
 
   ```bash
