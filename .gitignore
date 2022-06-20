@@ -2,4 +2,7 @@ docs/
 examples/
 env/
 *.pyc
+data/processed/*
+**/__pycache__
 Dockerfile
+logs/

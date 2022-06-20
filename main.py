@@ -29,7 +29,7 @@ ERROR_LEVEL = {0: "INFO", 1: "WARNING", 2: "CRITICAL"}
 error_list = []
 
 
-def print_errors(log, error_list):
+def print_errors(log: logging.Logger, error_list: list) -> None:
     error_str = ""
     for idx, error in enumerate(error_list):
         error_str = error_str + f"{idx}.  {error[0]}: {error[1]}\n"
@@ -81,7 +81,7 @@ class Notifier:
             )
 
 
-def clparser():
+def clparser() -> argparse.ArgumentParser:
     """Create a parser to handle input arguments and displaying
     a script specific help message."""
     desc_msg = """Evaulate a data file of ASV CTD readings
@@ -120,7 +120,7 @@ def clparser():
     return parser
 
 
-def ncdump(nc_fid, log, verb=True):
+def ncdump(nc_fid: nc, log: logging.Logger, verb=True) -> tuple:
     """
     ncdump outputs dimensions, variables and their attribute information.
     The information is similar to that of NCAR's ncdump utility.
@@ -143,7 +143,7 @@ def ncdump(nc_fid, log, verb=True):
         A Python list of the NetCDF file variables
     """
 
-    def print_ncattr(key):
+    def print_ncattr(key: str) -> None:
         """
         Prints the NetCDF file attributes for a given key
 
@@ -190,7 +190,11 @@ def ncdump(nc_fid, log, verb=True):
 
 
 def create_dirs(path: str) -> None:
-    """Execute the makedirs method on a given path"""
+    """Execute the makedirs method on a given path
+
+    Arguments:
+        :path: OS file path
+    """
     if not os.path.exists(path):
         try:
             os.makedirs(path)
@@ -198,11 +202,11 @@ def create_dirs(path: str) -> None:
             raise err
 
 
-def start_logging(log_dir) -> logging.Logger:
+def start_logging(log_dir: str) -> logging.Logger:
     """Create a logger instance.
 
     Arguments:
-      dir: Directory to store log files.
+        :dir: Directory to store log files.
     """
     create_dirs(log_dir)
     logging.basicConfig(
@@ -239,11 +243,11 @@ class UnicodeReader:
     """A CSV reader which will iterate over lines in the CSV file "f",
     which is encoded in the given encoding."""
 
-    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
+    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds) -> None:
         self.reader = csv.reader(f, dialect=dialect, **kwds)
         self.rows_read = 0
 
-    def next(self):
+    def next(self) -> list:
         row = next(self.reader)
         return row
 
@@ -266,9 +270,10 @@ class FileParser:
         self.reader = self.file_reader()
         self.eval_file()
 
-    def file_reader(self):
+    def file_reader(self) -> UnicodeReader:
         """Determine file dialect and encoding, then create
         and return a reader object"""
+        dialect = "utf-8"
         try:
             dialect = csv.Sniffer().sniff(open(self.filename).readline())
         except Exception:
@@ -315,7 +320,7 @@ class FileParser:
                 self.datarows += 1
         return self
 
-    def filestats(self):
+    def filestats(self) -> str:
         """Returns multi-line string of file information"""
         fstats = (
             "Filename: %s\nFile rows: %d\nHeader rows: %d\nColumn row: %d\nData rows: %d\n"
@@ -328,12 +333,12 @@ class FileParser:
 
 
 class MakeDataFrame:
-    def __init__(self, fileobj):
+    def __init__(self, fileobj: FileParser) -> None:
         self.fobj = fileobj
         self.cols = fileobj.cols
         self.reader = fileobj.file_reader()
 
-    def sensor_dataframe(self):
+    def sensor_dataframe(self) -> None:
         """Create a Pandas DataFrame from an array of arrays retrieved from the reader"""
         self.data_array = []
         self.syntax_test_failed_rows = []
@@ -378,7 +383,7 @@ class MakeDataFrame:
                     "float",
                 )
 
-    def parameter_dataframe(self):
+    def parameter_dataframe(self) -> None:
         """Create a Pandas DataFrame from an array
         of arrays retrieved from the reader"""
         self.data_array = []
@@ -413,12 +418,12 @@ def convert_xlsx(file: str) -> str:
 class NetCDF:
     """Create a NetCDF object and provide methods for adding self-describing attributes"""
 
-    def __init__(self, outfile, data_model="NETCDF4"):
+    def __init__(self, outfile: str, data_model="NETCDF4") -> None:
         self.filename = outfile
         self.data_model = data_model
         self.rootgrp = nc.Dataset(self.filename, "w", format=self.data_model)
 
-    def metadata(self):
+    def metadata(self) -> None:
         self.rootgrp.title = "Hypoxia Monitoring Data"
         self.rootgrp.description = "NOAA ASV sensor parameter QA"
         self.rootgrp.history = "Created %s" % (
@@ -430,7 +435,7 @@ class NetCDF:
         # self.rootgrp.sensor_id = sensor_id
         # self.rootgrp.sensor_sn = sensor_sn
 
-    def operational_variables(self, data):
+    def operational_variables(self, data: MakeDataFrame) -> None:
         self.rootgrp.createDimension("time", None)
         tim = self.rootgrp.createVariable("time", np.dtype("float64").char, ("time",))
         tim.long_name = "Time (PST) as Seconds Since 1970-01-01 00:00:00"
@@ -453,7 +458,7 @@ class NetCDF:
         lon[:] = data.df["LONGITUDE;DEG"]
 
 
-def geophysical_variables():
+def geophysical_variables() -> dict:
     """
     Returns a dict of variable names matching the geophysical variable's
     standard names
@@ -480,7 +485,7 @@ def geophysical_variables():
     return standard_name_lookup
 
 
-def syntax_test(times, failed_rows):
+def syntax_test(times, failed_rows: list) -> list:
     flags = np.ma.ones(times.size, dtype="uint8")
     for i, v in enumerate(times):
         if i in failed_rows:
@@ -489,13 +494,24 @@ def syntax_test(times, failed_rows):
 
 
 class SensorQC:
-    def __init__(self, data, config_params, ncfile, syntax_test_failed_rows):
+    def __init__(
+        self,
+        data: MakeDataFrame,
+        config_params: dict,
+        ncfile: NetCDF,
+        syntax_test_failed_rows: list,
+    ) -> None:
         self.data = data
         self.params = config_params
         self.ncfile = ncfile
         self.syntax_test_failed_rows = syntax_test_failed_rows
 
-    def create_variables(self, log, ncvariable, varname):
+    def create_variables(
+        self,
+        log: logging.Logger,
+        ncvariable: str,
+        varname: str,
+    ) -> list:
         """
         Returns a list of variable names for the newly created variables
         """
@@ -522,7 +538,7 @@ class SensorQC:
         variables.append(variable_name)
         return variables
 
-    def find_qc_flags(self, ncvariable):
+    def find_qc_flags(self, ncvariable: str) -> list:
         """
         Returns a list of QC flags associated with a variable
 
@@ -545,7 +561,12 @@ class SensorQC:
                     valid_variables.append(varname)
         return valid_variables
 
-    def create_qc_variables(self, log, ncvariable, varname):
+    def create_qc_variables(
+        self,
+        log: logging.Logger,
+        ncvariable: str,
+        varname: str,
+    ) -> list:
         """
         Returns a list of variable names for the newly created variables for QC flags
         """
@@ -704,7 +725,7 @@ class SensorQC:
 
         return qcvariables
 
-    def apply_qc(self, syntax_test_failed_rows, ncvariable):
+    def apply_qc(self, syntax_test_failed_rows: list, ncvariable: str) -> None:
         """
         Applies QC to a qartod variable
         """
@@ -948,11 +969,11 @@ class SensorQC:
 
     def get_rate_of_change_threshold(
         self,
-        values,
-        times,
+        values: list,
+        times: list,
         time_units="seconds since 1970-01-01T00:00:00Z",
         n_dev=3,
-    ):
+    ) -> np.float64:
         """
         Return the threshold used for the rate of change test
 
@@ -982,7 +1003,7 @@ class SensorQC:
 
         return thresh_rate
 
-    def get_spike_thresholds(self, values):
+    def get_spike_thresholds(self, values: list) -> tuple:
         """
         Return the min/max thresholds used for the spike test
 
@@ -993,7 +1014,7 @@ class SensorQC:
         max_thresh = 2.0 * std
         return min_thresh, max_thresh
 
-    def get_unmasked(self, ncvariable):
+    def get_unmasked(self, ncvariable: str) -> tuple:
         times = self.ncfile.variables["time"][:]
         values = ncvariable[:]
         mask = np.zeros(times.shape[0], dtype=bool)
@@ -1005,12 +1026,12 @@ class SensorQC:
         # values = self.normalize_variable(values, ncvariable.units, ncvariable.standard_name)
         return times, values, mask
 
-    def get_values(self, ncvariable):
+    def get_values(self, ncvariable: str) -> tuple:
         times = self.ncfile.variables["time"][:]
         values = ncvariable[:]
         return times, values
 
-    def apply_primary_qc(self, log, ncvariable):
+    def apply_primary_qc(self, log: logging.Logger, ncvariable: str) -> None:
         """
         Applies the primary QC array which is an aggregate of all the other QC
         tests.
@@ -1033,7 +1054,13 @@ class SensorQC:
         qcvar[:] = flags
 
 
-def run_qc(log, data, params, ncfile, syntax_test_failed_rows):
+def run_qc(
+    log: logging.Logger,
+    data: MakeDataFrame,
+    params: dict,
+    ncfile: NetCDF,
+    syntax_test_failed_rows: list,
+) -> None:
     qc = SensorQC(data, params, ncfile, syntax_test_failed_rows)
 
     for group in geophysical_variables():
