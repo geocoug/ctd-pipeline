@@ -356,7 +356,7 @@ class MakeDataFrame:
                 )
                 self.df[self.df.columns[col]] = self.df[
                     self.df.columns[col]
-                ] - datetime.datetime(2010, 1, 1, 0, 0)
+                ] - datetime.datetime(1970, 1, 1, 0, 0)
                 self.df[self.df.columns[col]] = self.df[
                     self.df.columns[col]
                 ].dt.total_seconds()
@@ -419,9 +419,9 @@ class NetCDF:
     def operational_variables(self, data):
         tim_dim = self.rootgrp.createDimension("time", None)
         tim = self.rootgrp.createVariable("time", np.dtype("float64").char, ("time",))
-        tim.long_name = "Time (PST) as Seconds Since 2010-01-01 00:00:00"
+        tim.long_name = "Time (PST) as Seconds Since 1970-01-01 00:00:00"
         tim.standard_name = "time"
-        tim.units = "seconds since 2010-01-01 00:00:00"
+        tim.units = "seconds since 1970-01-01 00:00:00"
         tim.time_zone = "PST"
         tim.calendar = "standard"
         tim[:] = data.df["Date / Time"]
@@ -507,7 +507,7 @@ class SensorQC(object):
 
     def find_qc_flags(self, ncvariable):
         """
-        Returns a list of non-GliderDAC QC flags associated with a variable
+        Returns a list of QC flags associated with a variable
 
         :param netCDF4.Variable ncvariable: Variable to get the status flag
                                             variables for
@@ -991,7 +991,6 @@ def run_qc(log, data, params, ncfile, syntax_test_failed_rows):
             ncvar = geophysical_variables()[group][varname]
             log.info("~" * 75)
             log.info("INSPECTING -- %s | %s", varname, ncvar)
-            # log.info("=" * 75)
 
             if group != "qartod":
                 log.info("%s does not need QARTOD", varname)
