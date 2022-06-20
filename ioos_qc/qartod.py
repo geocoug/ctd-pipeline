@@ -9,6 +9,7 @@ from typing import Dict, List, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
+
 from ioos_qc.utils import (
     add_flag_metadata,
     great_circle_distance,
@@ -641,8 +642,10 @@ def flat_line_test(
 
     # The thresholds are in seconds so we round make sure the interval is also in seconds
     time_interval = np.median(np.diff(tinp)).astype("timedelta64[s]").astype(float)
-    if time_interval == np.float64(0.0):
-        time_interval = np.float64(1.0)
+
+    # Time intervals can be < 1 second
+    if time_interval == 0:
+        time_interval = np.float64(1)
 
     def rolling_window(a, window):
         """
@@ -656,6 +659,7 @@ def flat_line_test(
         return np.ma.masked_invalid(arr[:-1, :])
 
     def run_test(test_threshold, flag_value):
+        print(test_threshold, time_interval)
         # convert time thresholds to number of observations
         count = (int(test_threshold) / time_interval).astype(int)
 
