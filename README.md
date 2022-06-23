@@ -8,19 +8,18 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
 ## To-Do
 
 - [ ] Unit testing
-- [ ] Execute QARTOD checks using the [ioos_qc](https://github.com/ioos/ioos_qc) library (see example module usage [here](https://github.com/ioos/glider-dac))
 - [ ] Validate [Sensor Parameters](./parameters/Sensor_Parameters.xlsx) - either on a per-run basis or on update.
 - [ ] Convert parameters to YAML?
-- [ ] Collaborate with GCOOS on delivery format
+- [x] Collaborate with GCOOS on delivery format. (NetCDF)
 - [ ] Validate output - run manual test against generated output
 - [ ] Run NetCDF [compliance checker](https://github.com/ioos/compliance-checker)
-- [ ] Integrate database archiving.
+- [x] Integrate database archiving.
 
 ## Setup
 
 - Using [Python](https://www.python.org/downloads/release/python-3100/) version 3.10+
 
-- Setup Python virtual environment
+- Setup virtual environment
 
   ```bash
   python -m venv env
@@ -34,18 +33,6 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
 
   > [ioos_qc](https://github.com/ioos/ioos_qc) was cloned to the current repository on version 2.0.1 and modified for project requirements. See the [notes](#notes) section for specifics.
 
-- Activate environment
-
-  ```bash
-  source ./env/bin/activate
-  ```
-
-- Install pre-commit hooks
-
-  ```bash
-  pre-commit install
-  ```
-
 - As of **2022-06-20** a few extra steps are needed to use the Python NetCDF4 module on Apple Silicon.
 
   ```bash
@@ -55,16 +42,51 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
   rm -r ./netcdf4-python
   ```
 
-- Run QC
+- Activate environment
 
+  ```bash
+  source ./env/bin/activate
+  ```
+
+- Install pre-commit hooks
+
+  ```bash
+  pre-commit install --install-hooks
+  ```
+
+- CLI
+
+  ```bash
+  usage: main.py [-h] [-v] [-e] input_file header_rows param_file output_dir log_dir
+
+  Evaulate a data file of ASV CTD readings and applies quality assurence checks following QARTOD
+  methods and assigning data quality flags as appropriate. Transform results into NetCDF format
+  following IC standards.
+
+  positional arguments:
+    input_file            Path to the input sensor data file.
+    header_rows           Number of rows preceeding the row containing column headers.
+    param_file            Path to sensor threshold parameters file.
+    output_dir            Path for output files to be stored.
+    log_dir               Directory to store log files.
+
+  options:
+    -h, --help            show this help message and exit
+    -v, --verbose         Control the amount of information to display.
+    -e, --error_monitoring
+                          Treat errors as CRITICAL and notify operators of any issues via email.
+                          This should generally only be used in production.
+  ```
+
+- Example QC Run
   ```bash
   python main.py -v ./data/received/2021-09-30T15-40-11.0.txt 0 ./parameters/Sensor_Parameters.xlsx ./data/processed logs
   ```
 
 ## Notes
 
-- Operator defined [Sensor Parameters](./parameters/Sensor_Parameters.xlsx) are defined for each cruise.
-- Parameters file contains acceptable ranges for the various data types.
+- Operator defined [Sensor Parameters](./parameters/Sensor_Parameters.xlsx) are set for each cruise, or seasonally.
+- Parameters file contains acceptable ranges for each type of sensor data.
 - Parameters are ingested and used as configuration settings for QARTOD checks.
 - There has been discussion of developing a set of parameters to use on a seasonal basis.
 
@@ -72,9 +94,9 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
 
 - [ioos_qc](https://github.com/ioos/ioos_qc) was cloned to the current repository on version 2.0.1 and modified for project requirements. The following revisions were made:
 
-  **qartod.py**
+#### qartod.py
 
-  - [time_interval](https://github.com/IntegralEnvision/asv-ctd-qa/commit/a249dd4ee84f719696fb31ecd6eabd9edd0f6a33#diff-32c09032f00f303300ace35369debee33af51ceb355defcce878c489bdc3af6aR646) calculation. CTD collection times can be < 1 second apart causing the number of observations to appear as 0.
+1. [time_interval](https://github.com/IntegralEnvision/asv-ctd-qa/commit/a249dd4ee84f719696fb31ecd6eabd9edd0f6a33#diff-32c09032f00f303300ace35369debee33af51ceb355defcce878c489bdc3af6aR646) calculation. CTD collection times can be < 1 second apart causing the number of observations to appear as 0.
 
 ## Data String Configuration (tab delimited)
 
