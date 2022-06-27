@@ -6,3 +6,4 @@ data/processed/*
 **/__pycache__
 Dockerfile
 logs/
+.mypy_cache/
