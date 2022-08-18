@@ -26,6 +26,12 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
   python -m venv env
   ```
 
+- Activate environment
+
+  ```bash
+  source ./env/bin/activate
+  ```
+
 - Install Dependencies
 
   ```bash
@@ -41,12 +47,6 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
   git clone https://github.com/Unidata/netcdf4-python.git
   HDF5_DIR=$(brew --prefix hdf5) pip install --no-cache-dir ./netcdf4-python
   rm -r ./netcdf4-python
-  ```
-
-- Activate environment
-
-  ```bash
-  source ./env/bin/activate
   ```
 
 - Install pre-commit hooks
