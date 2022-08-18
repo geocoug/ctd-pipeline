@@ -1,0 +1,24 @@
+{
+    "purpose": "Hypoxia Monitoring",
+    "description": "ASV hypoxia monitoring CTD data and QARTOD flags",
+    "vehicle": "C-Worker 5",
+    "source": "L3 Harris",
+    "PI": "Steven Howden",
+    "author": "Integral Consulting Inc",
+    "time_zone": "PST",
+    "convensions": "CF-1.6",
+    "seasonal_params": {
+        "spring": {
+            "parameters": "./parameters/Sensor_Parameters.xlsx"
+        },
+        "summer": {
+            "parameters": "./parameters/Sensor_Parameters.xlsx"
+        },
+        "fall": {
+            "parameters": "./parameters/Sensor_Parameters.xlsx"
+        },
+        "winter": {
+            "parameters": "./parameters/Sensor_Parameters.xlsx"
+        }
+    }
+}
