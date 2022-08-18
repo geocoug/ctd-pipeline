@@ -18,7 +18,7 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
 
 ## Setup
 
-- Using [Python](https://www.python.org/downloads/release/python-3100/) version 3.10+
+- Using [Python](https://www.python.org/downloads/release/python-3100/) version 3.9+
 
 - Setup virtual environment
 
@@ -80,6 +80,7 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
   ```
 
 - Example QC Run
+
   ```bash
   python main.py -v ./data/received/2021-09-30T15-40-11.0.txt 0 ./parameters/Sensor_Parameters.xlsx ./data/processed logs
   ```
@@ -117,9 +118,24 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
 
 ## QA/QC & Compliance Checks
 
-Quality control testing is implemented using the [qartod](https://ioos.github.io/ioos_qc/api/ioos_qc.html#module-ioos_qc.qartod) module of the [ioos_qc](https://github.com/ioos/ioos_qc) Python library. See also example implentations for [Gliders](https://github.com/ioos/glider-dac).
+- Quality control testing is implemented using the [qartod](https://ioos.github.io/ioos_qc/api/ioos_qc.html#module-ioos_qc.qartod) module of the [ioos_qc](https://github.com/ioos/ioos_qc) Python library. See also example implentations for [Gliders](https://github.com/ioos/glider-dac).
+- Compliance checks can be performed on the resulting output NetCDF via a [compliance checker](https://github.com/ioos/compliance-checker)
 
-Compliance checks can be performed on the resulting output NetCDF via a [compliance checker](https://github.com/ioos/compliance-checker)
+Visualize observations and QC flags together using `qc_plots.py`. [See example output here.](./data/processed/plots/2021-09-30T15-40-11.0.txt.nc/2021-09-30T15-40-11.0.txt.nc.html)
+
+```bash
+usage: qc_plots.py [-h] [-v] ncfile outdir
+
+Create plots of ASV CTD cast data with QARTOD flags.
+
+positional arguments:
+  ncfile         Path to the input NetCDF file.
+  outdir         Path to save output files.
+
+options:
+  -h, --help     show this help message and exit
+  -v, --verbose  Control the amount of information to display.
+```
 
 ## Help
 

@@ -1,19 +1,21 @@
+#!/usr/bin/env python3
+
 import argparse
+import logging
 import os
 
-# import cf_xarray
+import cf_xarray  # noqa
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
-# from matplotlib.figure import Figure
-
 # Suppress warning -- writing a lot of figures
 plt.rcParams["figure.max_open_warning"] = 0
 
 
-def plot_results(data, variable_name, results, title, test_name):
+def plot_results(data, variable_name, results, title, test_name, outdir):
+    """Create plot figures and save as PNG."""
     time = data["time"]
     obs = data[variable_name]
     qc_test = results[test_name]
@@ -61,27 +63,48 @@ def plot_results(data, variable_name, results, title, test_name):
     ax.legend(loc="best", bbox_to_anchor=(1.12, 0.75))
     ax.grid(True)
     plt.title(title)
-    if not os.path.exists(os.path.join(os.getcwd(), "plots")):
-        os.mkdir(os.path.join(os.getcwd(), "plots"))
     canvas = FigureCanvas(fig)
-    canvas.print_figure(os.path.join(os.getcwd(), "plots", f"{test_name}.png"))
+    canvas.print_figure(os.path.join(outdir, f"{test_name}.png"))
 
 
 def clparser() -> argparse.ArgumentParser:
-    """Create a parser to handle input arguments and displaying.
-
-    a script specific help message.
-    """
+    """Create a parser to handle input arguments and displaying a script specific help message."""
     desc_msg = """Create plots of ASV CTD cast data with QARTOD flags."""
     parser = argparse.ArgumentParser(description=desc_msg)
     parser.add_argument("ncfile", help="Path to the input NetCDF file.")
+    parser.add_argument("outdir", help="Path to save output files.")
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        dest="verbose",
+        default=False,
+        help="Control the amount of information to display.",
+    )
     return parser
 
 
-def main():
-    parser = clparser()
-    args = parser.parse_args()
-    ncfile = args.ncfile
+def generate_plots(ncfile: str, outdir: str, verbose=True):
+    """Generate plots of CTD observations overlayed with QARTOD flags.
+
+    Each plot is saved as a PNG and incorperated into a single HTML file.
+
+    :ncfile: NetCDF file containing observations and QARTOD flags.
+
+    Returns an HTML file
+    """
+
+    if verbose:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(message)s",
+        )
+        log = logging.getLogger(__name__)
+        log.addHandler(logging.StreamHandler())
+
+    outdir = os.path.join(outdir, os.path.basename(ncfile))
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
 
     data = xr.open_dataset(ncfile)
     variables = {}
@@ -90,7 +113,7 @@ def main():
             variables.update({name.split()[0]: data.cf.standard_names[name]})
 
     base_ncfile = os.path.basename(ncfile)
-    plot_html = os.path.join("plots", f"{base_ncfile}.html")
+    plot_html = os.path.join(outdir, f"{base_ncfile}.html")
 
     with open(plot_html, "w", encoding="utf-8") as f:
         f.write(
@@ -117,26 +140,25 @@ def main():
                             <nav id="toc" data-toggle="toc" class="sticky-top"></nav>
                         </div>
                         <div class="col-sm-9">
-
         """,
         )
-        print("Generating plots:")
         for var in variables:
-            print(f"  {var}")
+            if verbose:
+                log.info(f"    {var}")
             f.write(f"""<h3>{var}</h3>""")
             for qc in variables[var]:
-                f.write(f"""<div class="row"><h5>{qc}</h5>""")
+                f.write(f"""<div class="row"><h4>{qc}</h4>""")
                 plot_results(
                     data,
                     var,
                     data,
                     qc,
                     qc,
+                    outdir,
                 )
                 f.write(f"""<img src='{qc}.png'>""")
                 f.write("""</div>""")
             f.write("<hr>")
-
         f.write(
             """
                 </div>
@@ -152,7 +174,15 @@ def main():
             </html>
                 """,
         )
-    print(f"Output created: {plot_html}")
+
+
+def main():
+    parser = clparser()
+    args = parser.parse_args()
+    ncfile = args.ncfile
+    outdir = args.outdir
+    verbose = args.verbose
+    generate_plots(ncfile, outdir, verbose)
 
 
 if __name__ == "__main__":

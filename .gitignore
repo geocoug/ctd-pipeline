@@ -1,9 +1,9 @@
 docs/
 examples/
 env/
-*.pyc
-data/processed/*
-**/__pycache__
+data/processed/csv/
+data/processed/database/
+data/processed/netcdf/
+*cache*
 Dockerfile
 logs/
-.mypy_cache/
