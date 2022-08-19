@@ -1,4 +1,5 @@
-#! /usr/bin/python
+#!/usr/bin/env python3
+
 import argparse
 import csv
 import datetime
@@ -16,6 +17,7 @@ import quantities as pq
 import xarray as xr
 import xlsx2csv as xl
 
+import qc_plots
 from ioos_qc import argo, axds
 from ioos_qc import qartod as qc
 from ioos_qc import utils
@@ -938,13 +940,19 @@ class SensorQC:
                 "parameter_value",
             ].iloc[0]
             test_params["fail_threshold"] = qa_config.loc[
-                qa_config["parameter"] == "climate_max",
+                qa_config["parameter"] == "sensor_min",
                 "parameter_value",
             ].iloc[0]
-            test_params["min_obs"] = qa_config.loc[
-                qa_config["parameter"] == "rep_cnt_susp",
-                "parameter_value",
-            ].iloc[0]
+            # test_params["min_obs"] = qa_config.loc[
+            #     qa_config["parameter"] == "rep_cnt_fail",
+            #     "parameter_value",
+            # ].iloc[0]
+            test_params["test_period"] = 10
+            # test_params["min_period"] = qa_config.loc[
+            #     qa_config["parameter"] == "rep_cnt_fail",
+            #     "parameter_value",
+            # ].iloc[0]
+            test_params["check_type"] = "range"
 
         if qartod_test == "climatological":
             qc_flags = qc_tests[qartod_test](
@@ -1193,6 +1201,7 @@ def main() -> None:
     df = ds.to_dataframe()
     db_dir = "data/processed/database"
     csv_dir = "data/processed/csv"
+    plot_dir = "data/processed/plots"
     for dir in [db_dir, csv_dir]:
         if not os.path.exists(dir):
             os.mkdir(dir)
@@ -1203,6 +1212,8 @@ def main() -> None:
     csv_path = os.path.join("data/processed/csv", os.path.basename(ncfile.filename))
     log.info("  CSV")
     df.to_csv(f"{csv_path}.csv")
+    log.info("  Plots")
+    qc_plots.generate_plots(ncfile.filename, plot_dir)
 
     # --------------------------------
 

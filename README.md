@@ -9,6 +9,7 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
 
 - [ ] Checkout some of the work from the [Western Indian Ocean (WIO) Workshop](https://github.com/MathewBiddle/WIO_workshop)
 - [ ] Unit testing
+- [ ] Convert units for CF compliance: [cf-units](https://pypi.org/project/cf-units/)
 - [ ] Validate [Sensor Parameters](./parameters/Sensor_Parameters.xlsx) - either on a per-run basis or on update.
 - [ ] Convert parameters to YAML?
 - [x] Collaborate with GCOOS on delivery format. (NetCDF)

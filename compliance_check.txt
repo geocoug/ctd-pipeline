@@ -1,0 +1,78 @@
+
+
+--------------------------------------------------------------------------------
+                         IOOS Compliance Checker Report
+                                 Version 5.0.0
+                     Report generated 2022-08-18T23:51:28Z
+                                     cf:1.6
+       http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html
+--------------------------------------------------------------------------------
+                               Corrective Actions
+2021-09-30T15-40-11.0.txt.nc has 4 potential issues
+
+
+                                     Errors
+--------------------------------------------------------------------------------
+§3.1 Units
+* units for variable sea_water_temperature must be convertible to K currently they are C
+* units for depth, "M" are not recognized by UDUNITS
+* units for variable depth must be convertible to m currently they are M
+* units for sea_water_electrical_conductivity, "MS/CM" are not recognized by UDUNITS
+* units for variable sea_water_electrical_conductivity must be convertible to S m-1 currently they are MS/CM
+* units for sea_water_dissolved_oxygen, "SAT%" are not recognized by UDUNITS
+* units for sea_water_fluorescence, "UG/L" are not recognized by UDUNITS
+* units for altitude, "M" are not recognized by UDUNITS
+* units for variable altitude must be convertible to m currently they are M
+* units for sea_water_pressure, "DBAR" are not recognized by UDUNITS
+* units for variable sea_water_pressure must be convertible to dbar currently they are DBAR
+
+§3.3 Standard Name
+* standard_name sea_water_fluorescence is not defined in Standard Name Table v72
+* standard_name sea_water_ph is not defined in Standard Name Table v72
+* standard_name sea_water_dissolved_oxygen is not defined in Standard Name Table v72
+* standard_name sea_water_ph is not defined in Standard Name Table v72
+* standard_name sea_water_dissolved_oxygen is not defined in Standard Name Table v72
+* standard_name sea_water_ph is not defined in Standard Name Table v72
+* standard_name sea_water_ph is not defined in Standard Name Table v72
+* standard_name sea_water_dissolved_oxygen is not defined in Standard Name Table v72
+* standard_name sea_water_fluorescence is not defined in Standard Name Table v72
+* standard_name sea_water_dissolved_oxygen is not defined in Standard Name Table v72
+* standard_name sea_water_ph is not defined in Standard Name Table v72
+* standard_name sea_water_dissolved_oxygen is not defined in Standard Name Table v72
+* standard_name sea_water_ph is not defined in Standard Name Table v72
+* standard_name sea_water_dissolved_oxygen is not defined in Standard Name Table v72
+* standard_name sea_water_fluorescence is not defined in Standard Name Table v72
+* standard_name sea_water_fluorescence is not defined in Standard Name Table v72
+* standard_name sea_water_fluorescence is not defined in Standard Name Table v72
+* standard_name sea_water_dissolved_oxygen is not defined in Standard Name Table v72
+* standard_name sea_water_ph is not defined in Standard Name Table v72
+* standard_name sea_water_ph is not defined in Standard Name Table v72
+* standard_name sea_water_ph is not defined in Standard Name Table v72
+* standard_name sea_water_fluorescence is not defined in Standard Name Table v72
+* standard_name sea_water_ph is not defined in Standard Name Table v72
+* standard_name sea_water_fluorescence is not defined in Standard Name Table v72
+* standard_name sea_water_dissolved_oxygen is not defined in Standard Name Table v72
+* standard_name sea_water_dissolved_oxygen is not defined in Standard Name Table v72
+* standard_name sea_water_fluorescence is not defined in Standard Name Table v72
+* standard_name sea_water_dissolved_oxygen is not defined in Standard Name Table v72
+* standard_name sea_water_fluorescence is not defined in Standard Name Table v72
+* standard_name sea_water_ph is not defined in Standard Name Table v72
+* standard_name sea_water_ph is not defined in Standard Name Table v72
+* standard_name sea_water_fluorescence is not defined in Standard Name Table v72
+* standard_name sea_water_fluorescence is not defined in Standard Name Table v72
+* standard_name sea_water_fluorescence is not defined in Standard Name Table v72
+* standard_name sea_water_ph is not defined in Standard Name Table v72
+* standard_name sea_water_dissolved_oxygen is not defined in Standard Name Table v72
+* standard_name sea_water_dissolved_oxygen is not defined in Standard Name Table v72
+* standard_name sea_water_dissolved_oxygen is not defined in Standard Name Table v72
+* standard_name sea_water_fluorescence is not defined in Standard Name Table v72
+
+§4.3 Vertical Coordinate
+* altitude: vertical coordinates not defining pressure must include a positive attribute that is either 'up' or 'down'
+* depth: vertical coordinates not defining pressure must include a positive attribute that is either 'up' or 'down'
+
+
+                                    Warnings
+--------------------------------------------------------------------------------
+§2.6 Attributes
+* §2.6.1 Conventions field is not present
