@@ -93,14 +93,7 @@ def generate_plots(ncfile: str, outdir: str, verbose=True):
 
     Returns an HTML file
     """
-
-    if verbose:
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(message)s",
-        )
-        log = logging.getLogger(__name__)
-        log.addHandler(logging.StreamHandler())
+    logger = logging.getLogger(__name__)
 
     outdir = os.path.join(outdir, os.path.basename(ncfile))
     if not os.path.exists(outdir):
@@ -144,7 +137,7 @@ def generate_plots(ncfile: str, outdir: str, verbose=True):
         )
         for var in variables:
             if verbose:
-                log.info(f"    {var}")
+                logger.info(f"    {var}")
             f.write(f"""<h3>{var}</h3>""")
             for qc in variables[var]:
                 f.write(f"""<div class="row"><h4>{qc}</h4>""")
