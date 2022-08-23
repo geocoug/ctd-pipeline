@@ -177,6 +177,7 @@ class Parameters(FileParser):
         try:
             self.df = pd.DataFrame(self.data_array, columns=self.cols)
         except Exception:
+            logger.error("Unable to parse input data.")
             raise ScriptError(ERROR_LEVEL[2], "Unable to parse input data.")
 
         keys = {
