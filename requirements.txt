@@ -1,8 +1,11 @@
+antlr4-python3-runtime==4.7.2
 attrs==22.1.0
 autoflake==1.4
 bandit==1.7.4
 black==22.6.0
 certifi==2022.6.15
+cf-units==3.1.1
+cf-units==3.1.1
 cf-xarray==0.7.4
 cfgv==3.3.1
 cftime==1.6.1
@@ -22,9 +25,11 @@ GitPython==3.1.27
 identify==2.5.3
 ioos-qc==2.0.1
 isort==5.10.1
+Jinja2==3.1.2
 jsonschema==4.14.0
 kiwisolver==1.4.4
 llvmlite==0.39.0
+MarkupSafe==2.1.1
 matplotlib==3.5.3
 mccabe==0.7.0
 munch==2.5.0

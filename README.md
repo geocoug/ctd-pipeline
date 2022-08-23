@@ -9,12 +9,12 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
 ## To-Do
 
 - [ ] Comply with [CF Conventions](http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html)
-  - [ ] Convert units: [cf-units](https://pypi.org/project/cf-units/)
+  - [ ] Convert units: [cf-units](https://pypi.org/project/cf-units/). Udunits-2 database [xml files here](https://github.com/Unidata/UDUNITS-2/tree/master/lib)
+  - [ ] [Standard names (with search)](https://cfconventions.org/Data/cf-standard-names/76/build/cf-standard-name-table.html)
+  - [ ] [Standard names](http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml)
 - [ ] Validate [config.json](./config.json) - either on a per-run basis or on update.
-- [x] Collaborate with GCOOS on delivery format. (NetCDF)
 - [ ] Run NetCDF [compliance checker](https://github.com/ioos/compliance-checker)
   - Latest compliance check: [compliance_check.txt](./compliance_check.txt)
-- [x] Integrate database archiving.
 
 ## Setup
 
@@ -145,7 +145,8 @@ docker build -t asv-ctd .
 ```
 
 ```bash
-docker run -it --rm asv-ctd python asv_ctd_qa.py -v -p config.json ./data/received/2021-09-30T15-40-11.0.txt 0 ./data/processed
+# Bind mount the codebase during development.
+docker run -it --rm -v "$(pwd)":/app asv-ctd python asv_ctd_qa.py -v -p config.json ./data/received/2021-09-30T15-40-11.0.txt 0 ./data/processed
 ```
 
 ### Plotting QC Flags
