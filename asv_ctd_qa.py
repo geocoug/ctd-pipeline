@@ -12,6 +12,7 @@ import sys
 import netCDF4 as nc
 import numpy as np
 import pandas as pd
+from cf_units import Unit  # noqa
 
 import ncdump
 import qc_plots
@@ -466,8 +467,8 @@ def run_qc(
 
             # Remove this
             # ================
-            window_start = datetime.datetime.strptime("2020-01-01", "%Y-%m-%d")
-            window_end = datetime.datetime.strptime("2022-12-31", "%Y-%m-%d")
+            # window_start = datetime.datetime.strptime("2020-01-01", "%Y-%m-%d")
+            # window_end = datetime.datetime.strptime("2022-12-31", "%Y-%m-%d")
             # ================
 
             cc = qartod.ClimatologyConfig()
@@ -500,7 +501,6 @@ def run_qc(
     store = PandasStore(qc_results)
     store.compute_aggregate()
     results_store = store.save(write_data=False, write_axes=False)
-    # results = pd.concat([df, results_store], axis=1)
 
     for variable in ioos_qc_config["variables"]:
         for test_type in ioos_qc_config["variables"][variable]:
