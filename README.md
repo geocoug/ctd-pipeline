@@ -7,30 +7,30 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
 
 ## To-Do
 
-- [ ] Checkout some of the work from the [Western Indian Ocean (WIO) Workshop](https://github.com/MathewBiddle/WIO_workshop)
-- [ ] Unit testing
-- [ ] Convert units for CF compliance: [cf-units](https://pypi.org/project/cf-units/)
-- [ ] Validate [Sensor Parameters](./parameters/Sensor_Parameters.xlsx) - either on a per-run basis or on update.
-- [ ] Convert parameters to YAML?
+- [ ] Comply with [CF Conventions](http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html)
+  - [ ] Convert units: [cf-units](https://pypi.org/project/cf-units/)
+- [ ] Validate [config.json](./config.json) - either on a per-run basis or on update.
 - [x] Collaborate with GCOOS on delivery format. (NetCDF)
-- [ ] Validate output - run manual test against generated output
 - [ ] Run NetCDF [compliance checker](https://github.com/ioos/compliance-checker)
+  - Latest compliance check: [compliance_check.txt](./compliance_check.txt)
 - [x] Integrate database archiving.
 
 ## Setup
+
+### Environment
 
 - Using [Python](https://www.python.org/downloads/release/python-3100/) version 3.9+
 
 - Setup virtual environment
 
   ```bash
-  python -m venv env
+  python -m venv .venv
   ```
 
 - Activate environment
 
   ```bash
-  source ./env/bin/activate
+  source ./.venv/bin/activate
   ```
 
 - Install Dependencies
@@ -41,55 +41,128 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
 
   > [ioos_qc](https://github.com/ioos/ioos_qc) was cloned to the current repository on version 2.0.1 and modified for project requirements. See the [notes](#notes) section for specifics.
 
-- As of **2022-06-20** a few extra steps are needed to use the Python NetCDF4 module on Apple Silicon.
+  - As of **2022-06-20** a few extra steps are needed to use the Python NetCDF4 module on Apple Silicon.
 
-  ```bash
-  brew install hdf5 netcdf
-  git clone https://github.com/Unidata/netcdf4-python.git
-  HDF5_DIR=$(brew --prefix hdf5) pip install --no-cache-dir ./netcdf4-python
-  rm -r ./netcdf4-python
-  ```
+    ```bash
+    brew install hdf5 netcdf
+    git clone https://github.com/Unidata/netcdf4-python.git
+    HDF5_DIR=$(brew --prefix hdf5) pip install --no-cache-dir ./netcdf4-python
+    rm -r ./netcdf4-python
+    ```
 
 - Install pre-commit hooks
 
   ```bash
-  pre-commit install --install-hooks
+  python -m pre_commit install --install-hooks
   ```
 
-- CLI
+### Configure IOOS QC Test Parameters
+
+IOOS QC test configurations are defined in [global.json](global.json). Below is an example QC configuration for the parameter `pressure`.
+
+```json
+"pressure": {              // Standard CF-safe parameter name
+  "argo": {                         // Tests based on the ARGO QC manual
+    "pressure_increasing_test": null    // Check if pressure does not monotonically increase
+  },
+  "axds": {                         // Tests based on the IOOS QC manual
+    "valid_range_test": {               // Checks that values are within a min/max range. This is not unlike a `qartod.gross_range_test` with fail and suspect bounds being equal, except that here we specify the inclusive range that should pass instead of the exclusive bounds which should fail
+      "valid_span": [-5, 35]                // Values outside the range will FAIL
+    }
+  },
+  "qartod": {                       // Tests based on the IOOS QC manual
+    "gross_range_test": {               // Checks that values are within reasonable range bounds.
+      "suspect_span": [20, 35],             // Values outside the range will be SUSPECT
+       "fail_span": [-5, 35]                // Values outside the range will be FAIL
+    },
+    "flat_line_test": {                 // Check for consecutively repeated values within a tolerance.
+      "tolerance": 0.01,                    // The tolerance that should be exceeded between consecutive values.
+      "suspect_threshold": 300,             // The number of seconds within `tolerance` to allow before being flagged as SUSPECT.
+      "fail_threshold": 900                 // The number of seconds within `tolerance` to allow before being flagged as FAIL.
+    },
+    "rate_of_change_test": {            // Checks the first order difference of a series of values to see if there are any values exceeding a threshold defined by the inputs. These are then marked as SUSPECT.
+      "threshold": 5                        // A float value representing a rate of change over time, in observation units per second.
+    },
+    "spike_test": {                     // Check for spikes by checking neighboring data against thresholds.
+      "suspect_threshold": 0.01,            // The SUSPECT threshold value, in observations units.
+      "fail_threshold": 0.02,               // The SUSPECT threshold value, in observations units.
+      "method": "average"                   // ['average'(default),'differential'] optional input to assign the method used to detect spikes.
+                                                // "average": Determine if there is a spike at data point n-1 by subtracting the midpoint of n and n-2 and taking the absolute value of this quantity, and checking if it exceeds a low or high threshold.
+                                                // "differential": Determine if there is a spike at data point n by calculating the difference between n and n-1 and n+1 and n variation. To considered, (n - n-1)*(n+1 - n) should be smaller than zero (in opposite direction).
+    },
+    "attenuated_signal_test": {         // Check for near-flat-line conditions using a range or standard deviation.
+      "suspect_threshold": 5,               // Any calculated value below this amount will be flagged as SUSPECT. In observations units.
+      "fail_threshold": 3,                  // Any calculated values below this amount will be flagged as FAIL. In observations units.
+      "test_period": 15,                    // Length of time to test over in seconds [optional]. Otherwise, will test against entire `inp`.
+      "min_obs": null,                      // Minimum number of observations in window required to calculate a result [optional]. Otherwise, test will start at beginning of time series. Note: you can specify either `min_obs` or `min_period`, but not both.
+      "min_period": null,                   // Minimum number of seconds in test_period required to calculate a result [optional]. Otherwise, test will start at beginning of time series. Note: you can specify either `min_obs` or `min_period`, but not both.
+      "check_type": "range"                 // Either 'std' (default) or 'range', depending on the type of check you wish to perform.
+    },
+    "density_inversion_test": {         // With few exceptions, potential water density will increase with increasing pressure. When vertical profile data is obtained, this test is used to flag as failed T, C, and SP observations, which yield densities that do not sufficiently increase with pressure. A small operator-selected density threshold (DT) allows for micro-turbulent exceptions.
+      "suspect_threshold": 3,               // A float value representing a maximum potential density(or sigma0) variation to be tolerated, downward density variation exceeding this will be flagged as SUSPECT.
+      "fail_threshold": 5                   // A float value representing a maximum potential density(or sigma0) variation to be tolerated, downward density variation exceeding this will be flagged as FAIL.
+    },
+    "climatology_test": {               // Checks that values are within reasonable range bounds and flags as SUSPECT.
+      "suspect_span": [20, 35],              // (optional) 2-tuple range of valid values. This is passed in as the fail_span to the gross_range_test.
+      "fail_span": [-5, 35],                  // 2-tuple range of valid values. This is passed in as the suspect_span to the gross_range test.
+      "zspan": [0, 100]
+    }
+  }
+}
+```
+
+### Run QC Checks
 
   ```bash
-  usage: main.py [-h] [-v] [-e] input_file header_rows param_file output_dir log_dir
+usage: asv_ctd_qa.py [-h] [-p] [-v] config input_file header_rows output_dir log_dir
 
-  Evaulate a data file of ASV CTD readings and applies quality assurence checks following QARTOD
-  methods and assigning data quality flags as appropriate. Transform results into NetCDF format
-  following IC standards.
+Evaulate a data file of ASV CTD readings and apply quality assurence checks following QARTOD methods and assigning data quality flags as appropriate.
+Transform results into NetCDF format following IC standards.
 
-  positional arguments:
-    input_file            Path to the input sensor data file.
-    header_rows           Number of rows preceeding the row containing column headers.
-    param_file            Path to sensor threshold parameters file.
-    output_dir            Path for output files to be stored.
-    log_dir               Directory to store log files.
+positional arguments:
+  config         Configuration JSON file.
+  input_file     Path to the input sensor data file.
+  header_rows    Number of rows preceeding the row containing column headers.
+  output_dir     Directory for output files.
+  log_dir        Directory for log files.
 
-  options:
-    -h, --help            show this help message and exit
-    -v, --verbose         Control the amount of information to display.
-    -e, --error_monitoring
-                          Treat errors as CRITICAL and notify operators of any issues via email.
-                          This should generally only be used in production.
+options:
+  -h, --help     show this help message and exit
+  -p, --plot     Create an HTML file containing plots of QC flags.
+  -v, --verbose  Control the amount of information to display.
   ```
 
-- Example QC Run
+#### Example QC Run
 
   ```bash
   python main.py -v ./data/received/2021-09-30T15-40-11.0.txt 0 ./parameters/Sensor_Parameters.xlsx ./data/processed logs
   ```
 
+### Plotting QC Flags
+
+Visualize observations and QC flags together using [qc_plots.py](./qc_plots.py). [See example output here.](./data/processed/plots/2021-09-30T15-40-11.0.txt.nc/2021-09-30T15-40-11.0.txt.nc.html)
+
+```bash
+usage: qc_plots.py [-h] [-v] ncfile outdir
+
+Create plots of ASV CTD cast data with QARTOD flags.
+
+positional arguments:
+  ncfile         Path to the input NetCDF file.
+  outdir         Path to save output files.
+
+options:
+  -h, --help     show this help message and exit
+  -v, --verbose  Control the amount of information to display.
+```
+
+### Dumping NetCDF Contents
+
+Use the `netcdf` package, which can be downloaded using Homebrew. Or, use the [ncdump.py](./ncdump.py) utility.
+
 ## Notes
 
-- Operator defined [Sensor Parameters](./parameters/Sensor_Parameters.xlsx) are set for each cruise, or seasonally.
-- Parameters file contains acceptable ranges for each type of sensor data.
+- `config.json` file contains acceptable ranges for each type of sensor data.
 - Parameters are ingested and used as configuration settings for QARTOD checks.
 - There has been discussion of developing a set of parameters to use on a seasonal basis.
 
@@ -122,25 +195,10 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
 - Quality control testing is implemented using the [qartod](https://ioos.github.io/ioos_qc/api/ioos_qc.html#module-ioos_qc.qartod) module of the [ioos_qc](https://github.com/ioos/ioos_qc) Python library. See also example implentations for [Gliders](https://github.com/ioos/glider-dac).
 - Compliance checks can be performed on the resulting output NetCDF via a [compliance checker](https://github.com/ioos/compliance-checker)
 
-Visualize observations and QC flags together using `qc_plots.py`. [See example output here.](./data/processed/plots/2021-09-30T15-40-11.0.txt.nc/2021-09-30T15-40-11.0.txt.nc.html)
-
-```bash
-usage: qc_plots.py [-h] [-v] ncfile outdir
-
-Create plots of ASV CTD cast data with QARTOD flags.
-
-positional arguments:
-  ncfile         Path to the input NetCDF file.
-  outdir         Path to save output files.
-
-options:
-  -h, --help     show this help message and exit
-  -v, --verbose  Control the amount of information to display.
-```
-
 ## Help
 
 - [QARTOD](https://ioos.noaa.gov/project/qartod/)
 - [Intro to NetCDF](https://adyork.github.io/python-oceanography-lesson/17-Intro-NetCDF/index.html)
 - [Writing NetCDF](https://www.earthinversion.com/utilities/Writing-NetCDF4-Data-using-Python/)
 - [Dimensions](http://www.bic.mni.mcgill.ca/users/sean/Docs/netcdf/guide.txn_12.html)
+- [Western Indian Ocean (WIO) Workshop](https://github.com/MathewBiddle/WIO_workshop)

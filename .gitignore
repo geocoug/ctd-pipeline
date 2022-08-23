@@ -1,9 +1,6 @@
 docs/
 examples/
-env/
-data/processed/csv/
-data/processed/database/
-data/processed/netcdf/
+.venv/
 *cache*
 Dockerfile
-logs/
+*logs*
