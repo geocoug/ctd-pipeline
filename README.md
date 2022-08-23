@@ -1,5 +1,6 @@
 # asv-ctd-qa
 
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/IntegralEnvision/asv-ctd-qa/main.svg?badge_token=UugoxsuCStiAFKx-xd334Q)](https://results.pre-commit.ci/latest/github/IntegralEnvision/asv-ctd-qa/main?badge_token=UugoxsuCStiAFKx-xd334Q)
 [![Docker](https://github.com/IntegralEnvision/asv-ctd-qa/workflows/docker%20build/badge.svg)](https://github.com/IntegralEnvision/asv-ctd-qa/workflows/docker-build.yml)
 [![GitHub Super-Linter](https://github.com/IntegralEnvision/asv-ctd-qa/workflows/lint%20code%20base/badge.svg)](https://github.com/marketplace/actions/super-linter)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
