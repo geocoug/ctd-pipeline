@@ -61,4 +61,4 @@ toml==0.10.2
 tomli==2.0.1
 typing_extensions==4.3.0
 virtualenv==20.16.3
-xarray==2022.6.0
+xarray==2022.3.0

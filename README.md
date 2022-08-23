@@ -115,7 +115,7 @@ IOOS QC test configurations are defined in [global.json](global.json). Below is 
 ### Run QC Checks
 
   ```bash
-usage: asv_ctd_qa.py [-h] [-p] [-v] config input_file header_rows output_dir log_dir
+usage: asv_ctd_qa.py [-h] [-p] [-v] config input_file header_rows output_dir
 
 Evaulate a data file of ASV CTD readings and apply quality assurence checks following QARTOD methods and assigning data quality flags as appropriate.
 Transform results into NetCDF format following IC standards.
@@ -125,7 +125,6 @@ positional arguments:
   input_file     Path to the input sensor data file.
   header_rows    Number of rows preceeding the row containing column headers.
   output_dir     Directory for output files.
-  log_dir        Directory for log files.
 
 options:
   -h, --help     show this help message and exit
@@ -136,7 +135,7 @@ options:
 #### Example QC Run
 
   ```bash
-  python asv_ctd_qa.py -v -p config.json ./data/received/2021-09-30T15-40-11.0.txt 0 ./data/processed logs
+  python asv_ctd_qa.py -v -p config.json ./data/received/2021-09-30T15-40-11.0.txt 0 ./data/processed
   ```
 
 #### Example QC Run using Docker
@@ -146,7 +145,7 @@ docker build -t asv-ctd .
 ```
 
 ```bash
-docker run -it --rm -v "$(pwd)"/data:/app/data -v "$(pwd)"/logs:/app/logs -v "$(pwd)"/ioos_qc:/app/ioos_qc asv-ctd python asv_ctd_qa.py -v -p config.json ./data/received/2021-09-30T15-40-11.0.txt 0 ./data/processed ./logs
+docker run -it --rm asv-ctd python asv_ctd_qa.py -v -p config.json ./data/received/2021-09-30T15-40-11.0.txt 0 ./data/processed
 ```
 
 ### Plotting QC Flags

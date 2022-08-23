@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding=utf-8
-
 import argparse
 import calendar
 import csv
@@ -8,7 +7,7 @@ import datetime
 import json
 import logging
 import os
-from numbers import Real
+import sys
 
 import netCDF4 as nc
 import numpy as np
@@ -22,16 +21,34 @@ from ioos_qc.qartod import QartodFlags
 from ioos_qc.stores import PandasStore
 from ioos_qc.streams import PandasStream
 
-# from typing import Dict, List, Tuple
-# from wsgiref import validate
-
-# import quantities as pq
-# import xarray as xr
-
-
-N = Real
 ERROR_LEVEL = {0: "INFO", 1: "WARNING", 2: "CRITICAL"}
 error_list = []
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter(
+    "%(asctime)s : %(msecs)04d : %(name)s : %(levelname)s : %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+log_dir = os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), "logs")
+if not os.path.exists(log_dir):
+    try:
+        os.makedirs(log_dir)
+    except OSError:
+        raise
+log_file = f"log_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+log_path = os.path.join(log_dir, log_file)
+fh = logging.FileHandler(log_path)
+fh.setLevel(logging.INFO)
+fh.setFormatter(formatter)
+logger.addHandler(fh)
+
+
+def print_errors(log: logging.Logger, error_list: list) -> None:
+    error_str = ""
+    for idx, error in enumerate(error_list):
+        error_str = error_str + f"{idx}.  {error[0]}: {error[1]}\n"
+    log.warning(error_str)
 
 
 class ScriptError(Exception):
@@ -166,6 +183,9 @@ class Parameters(FileParser):
             key: self.config["parameters"][key]["standard_name"]
             for key in self.config["parameters"]
         }
+        logger.info("CREATING CF COMPLIANT PARAMETER NAMES")
+        for key, value in keys.items():
+            logger.info(f"  {key} -> {value}")
         self.df.rename(columns=keys, inplace=True)
         self.df["syntax_test"] = self.syntax_test()
         for key in keys:
@@ -326,10 +346,6 @@ def clparser() -> argparse.ArgumentParser:
         help="Directory for output files.",
     )
     parser.add_argument(
-        "log_dir",
-        help="Directory for log files.",
-    )
-    parser.add_argument(
         "-p",
         "--plot",
         action="store_true",
@@ -348,56 +364,20 @@ def clparser() -> argparse.ArgumentParser:
     return parser
 
 
-class Log:
-    def __init__(self, dir: str) -> None:
-        """Instantiate logging.
-
-        By default the logger uses a file handler.
-        Optionally stream log messages to the console.
-        """
-        self.logger = logging.getLogger(__name__)
-        self.dir = dir
-        self.file = os.path.join(
-            dir,
-            f"log_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.log",
-        )
-
-    def spacer(self) -> None:
-        self.logger.info("~" * 66)
-
-    def add_handlers(self, verbose: bool = False) -> None:
-        """By default the logger uses a file handler.
-
-        Optionally stream log messages to the console.
-        """
-        self.logger.setLevel(logging.INFO)
-        if verbose:
-            self.logger.addHandler(logging.StreamHandler())
-        # Log file handler
-        create_dir(self.dir)
-        formatter = logging.Formatter(
-            "%(asctime)s : %(msecs)04d : %(name)s : %(levelname)s : %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        )
-        fh = logging.FileHandler(self.file)
-        fh.setLevel(logging.INFO)
-        fh.setFormatter(formatter)
-        self.logger.addHandler(fh)
-
-    def preamble(self, **kwargs) -> None:
-        """Write a preamble to a log file consisting of key:value pairs."""
-        self.logger.info("=" * 66)
-        self.logger.info(
-            "start time: %s %s"
-            % (
-                datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S %p"),
-                datetime.datetime.now().astimezone().tzinfo,
-            ),
-        )
-        if len(kwargs) > 0:
-            for arg in kwargs:
-                self.logger.info(f"{arg}: {kwargs[arg]}")
-        self.logger.info("=" * 66)
+def preamble(**kwargs) -> None:
+    """Write a preamble to a log file consisting of key:value pairs."""
+    logger.info("=" * 66)
+    logger.info(
+        "start time: %s %s"
+        % (
+            datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S %p"),
+            datetime.datetime.now().astimezone().tzinfo,
+        ),
+    )
+    if len(kwargs) > 0:
+        for arg in kwargs:
+            logger.info(f"{arg}: {kwargs[arg]}")
+    logger.info("=" * 66)
 
 
 def current_time_window() -> tuple:
@@ -458,7 +438,6 @@ def run_qc(
     config: dict,
     parameters: Parameters,
     ncfile: NetCDF,
-    logger: logging.Logger,
 ) -> None:
 
     ioos_qc_config = config["ioos_qc"]
@@ -542,7 +521,6 @@ def asv_ctd_qa(
     input_file: str,
     num_headerrows: int,
     output_dir: str,
-    log_dir: str,
     plot: bool = False,
     verbose: bool = False,
 ) -> None:
@@ -578,9 +556,9 @@ def asv_ctd_qa(
     create_dir(ncfile_dir)
     out_ncfile = os.path.join(ncfile_dir, f"{input_file_basefn}.nc")
 
-    log = Log(log_dir)
-    log.add_handlers(verbose)
-    log.preamble(
+    if verbose:
+        logger.addHandler(logging.StreamHandler())
+    preamble(
         config=config,
         input_file=input_file,
         input_file_basefn=input_file_basefn,
@@ -592,7 +570,6 @@ def asv_ctd_qa(
         plot=plot,
         verbose=verbose,
     )
-    logger = log.logger
 
     try:
         with open(config, "r", encoding="utf-8") as f:
@@ -620,16 +597,16 @@ def asv_ctd_qa(
             config_json["parameters"][parameter],
         )
 
-    run_qc(config_json, parameters, ncfile, logger)
+    run_qc(config_json, parameters, ncfile)
 
     # Pretty print NetCDF file information, also store sections as variables
-    if verbose:
-        nc_attrs, nc_dims, nc_vars = ncdump.ncdump(ncfile, logger)
-    else:
-        nc_attrs, nc_dims, nc_vars = ncdump.ncdump(ncfile, logger, verb=False)
+    logger.info("=" * 66)
+    logger.info("LOGGING OUTPUT NETCDF ATTRIBUTES")
+    nc_attrs, nc_dims, nc_vars = ncdump.ncdump(ncfile, verb=True if verbose else False)
 
     if plot:
-        logger.info("GENERATING PLOTS")
+        logger.info("=" * 66)
+        logger.info("CREATING OBSERVATION PLOTS WITH QC FLAGS")
         plot_dir = os.path.join(output_dir, "plots")
         create_dir(plot_dir)
         qc_plots.generate_plots(
@@ -637,6 +614,20 @@ def asv_ctd_qa(
             plot_dir,
             verbose,
         )
+
+    # Check for errors to report on
+    if len(error_list) > 0:
+        if verbose:
+            print_errors(error_list)
+
+    logger.info("=" * 66)
+    logger.info(
+        "Done at %s %s"
+        % (
+            datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S %p"),
+            datetime.datetime.now().astimezone().tzinfo,
+        ),
+    )
 
 
 if __name__ == "__main__":
@@ -647,8 +638,7 @@ if __name__ == "__main__":
     input_file = args.input_file
     num_headerrows = args.header_rows
     output_dir = args.output_dir
-    log_dir = args.log_dir
     # Optional
     plot = args.plot
     verbose = args.verbose
-    asv_ctd_qa(config, input_file, num_headerrows, output_dir, log_dir, plot, verbose)
+    asv_ctd_qa(config, input_file, num_headerrows, output_dir, plot, verbose)

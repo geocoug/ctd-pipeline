@@ -2,8 +2,10 @@
 # coding=utf-8
 
 import argparse
+import datetime
 import logging
 import os
+import sys
 
 import cf_xarray  # noqa
 import matplotlib.pyplot as plt
@@ -13,6 +15,25 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 # Suppress warning -- writing a lot of figures
 plt.rcParams["figure.max_open_warning"] = 0
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter(
+    "%(asctime)s : %(msecs)04d : %(name)s : %(levelname)s : %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+log_dir = os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), "logs")
+if not os.path.exists(log_dir):
+    try:
+        os.makedirs(log_dir)
+    except OSError:
+        raise
+log_file = f"log_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+log_path = os.path.join(log_dir, log_file)
+fh = logging.FileHandler(log_path)
+fh.setLevel(logging.INFO)
+fh.setFormatter(formatter)
+logger.addHandler(fh)
 
 
 def plot_results(data, variable_name, results, title, test_name, outdir):
@@ -94,7 +115,8 @@ def generate_plots(ncfile: str, outdir: str, verbose=True):
 
     Returns an HTML file
     """
-    logger = logging.getLogger(__name__)
+    if verbose:
+        logger.addHandler(logging.StreamHandler())
 
     outdir = os.path.join(outdir, os.path.basename(ncfile))
     if not os.path.exists(outdir):
@@ -137,8 +159,7 @@ def generate_plots(ncfile: str, outdir: str, verbose=True):
         """,
         )
         for var in variables:
-            if verbose:
-                logger.info(f"    {var}")
+            logger.info(f"    {var}")
             f.write(f"""<h3>{var}</h3>""")
             for qc in variables[var]:
                 f.write(f"""<div class="row"><h4>{qc}</h4>""")
