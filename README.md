@@ -1,5 +1,6 @@
 # asv-ctd-qa
 
+[![Docker](https://github.com/IntegralEnvision/asv-ctd-qa/workflows/docker%20build/badge.svg)](https://github.com/IntegralEnvision/asv-ctd-qa/workflows/docker-build.yml)
 [![GitHub Super-Linter](https://github.com/IntegralEnvision/asv-ctd-qa/workflows/lint%20code%20base/badge.svg)](https://github.com/marketplace/actions/super-linter)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
@@ -135,8 +136,18 @@ options:
 #### Example QC Run
 
   ```bash
-  python main.py -v ./data/received/2021-09-30T15-40-11.0.txt 0 ./parameters/Sensor_Parameters.xlsx ./data/processed logs
+  python asv_ctd_qa.py -v -p config.json ./data/received/2021-09-30T15-40-11.0.txt 0 ./data/processed logs
   ```
+
+#### Example QC Run using Docker
+
+```bash
+docker build -t asv-ctd .
+```
+
+```bash
+docker run -it --rm -v "$(pwd)"/data:/app/data -v "$(pwd)"/logs:/app/logs -v "$(pwd)"/ioos_qc:/app/ioos_qc asv-ctd python asv_ctd_qa.py -v -p config.json ./data/received/2021-09-30T15-40-11.0.txt 0 ./data/processed ./logs
+```
 
 ### Plotting QC Flags
 
