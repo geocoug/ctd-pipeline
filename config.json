@@ -1,0 +1,561 @@
+{
+    "attributes": {
+        "purpose": "Hypoxia Monitoring",
+        "description": "ASV hypoxia monitoring CTD data and QARTOD flags",
+        "vehicle": "C-Worker 5",
+        "source": "L3 Harris",
+        "PI": "Steven Howden",
+        "author": "Integral Consulting Inc",
+        "time_zone": "PST",
+        "convensions": "CF-1.6"
+    },
+    "parameters": {
+        "TEMPERATURE;C": {
+            "standard_name": "sea_water_temperature",
+            "long_name": "Temperature",
+            "dtype": "float64",
+            "units": "C",
+            "standard_unit": "C"
+        },
+        "CONDUCTIVITY;MS/CM": {
+            "standard_name": "sea_water_electrical_conductivity",
+            "long_name": "Electrical Conductivity",
+            "dtype": "float64",
+            "units": "MS/CM",
+            "standard_unit": "mS/cm"
+        },
+        "PRESSURE;DBAR": {
+            "standard_name": "sea_water_pressure",
+            "long_name": "Pressure",
+            "dtype": "float64",
+            "units": "DBAR",
+            "standard_unit": "decibar"
+        },
+        "Calc. SALINITY; PSU": {
+            "standard_name": "sea_water_practical_salinity",
+            "long_name": "Practical salinity",
+            "dtype": "float64",
+            "units": "PSU",
+            "standard_unit": "psu"
+        },
+        "PH;PH": {
+            "standard_name": "sea_water_ph",
+            "long_name": "pH",
+            "dtype": "float64",
+            "units": "PH",
+            "standard_unit": "pH"
+        },
+        "DISSOLVED OXYGEN;SAT%": {
+            "standard_name": "sea_water_dissolved_oxygen",
+            "long_name": "Dissolved oxygen",
+            "dtype": "float64",
+            "units": "SAT%",
+            "standard_unit": "percent"
+        },
+        "FLUOROMETER (C);UG/L": {
+            "standard_name": "sea_water_fluorescence",
+            "long_name": "Fluorescence",
+            "dtype": "float64",
+            "units": "UG/L",
+            "standard_unit": "ug/L"
+        },
+        "TURBIDITY;FTU": {
+            "standard_name": "sea_water_turbidity",
+            "long_name": "Turbidity",
+            "dtype": "float64",
+            "units": "FTU",
+            "standard_unit": "ftu"
+        },
+        "ALTITUDE;M": {
+            "standard_name": "altitude",
+            "long_name": "Altitude",
+            "dtype": "float64",
+            "units": "M",
+            "standard_unit": "meters"
+        },
+        "Calc. DEPTH;M": {
+            "standard_name": "depth",
+            "long_name": "Depth",
+            "dtype": "float64",
+            "units": "M",
+            "standard_unit": "meters"
+        },
+        "Date / Time": {
+            "standard_name": "time",
+            "long_name": "Time",
+            "dtype": "datetime64[s]",
+            "units": "timestamp",
+            "standard_unit": "Time (PST) as Seconds Since 1970-01-01 00:00:00",
+            "time_zone": "PST",
+            "calendar": "standard"
+        },
+        "LATITUDE;DEG": {
+            "standard_name": "lat",
+            "long_name": "Latitude degrees",
+            "dtype": "float64",
+            "units": "degrees_north",
+            "standard_unit": "degrees_north"
+        },
+        "LONGITUDE;DEG": {
+            "standard_name": "lon",
+            "long_name": "Longitude degrees",
+            "dtype": "float64",
+            "units": "degrees_east",
+            "standard_unit": "degrees_east"
+        }
+    },
+    "ioos_qc": {
+        "global": {
+            "utils": {
+                "check_timestamps": {
+                    "max_time_interval": 3
+                }
+            },
+            "qartod": {
+                "location_test": {
+                    "bbox": [
+                        -98.000001,
+                        18.000001,
+                        -80.000001,
+                        30.000001
+                    ]
+                }
+            }
+        },
+        "variables": {
+            "sea_water_pressure": {
+                "argo": {
+                    "pressure_increasing_test": null
+                },
+                "axds": {
+                    "valid_range_test": {
+                        "valid_span": [0, 30]
+                    }
+                },
+                "qartod": {
+                    "gross_range_test": {
+                        "suspect_span": [0.01, 30],
+                        "fail_span": [0.01, 30]
+                    },
+                    "flat_line_test": {
+                        "tolerance": 0.001,
+                        "suspect_threshold": 300,
+                        "fail_threshold": 900
+                    },
+                    "rate_of_change_test": {
+                        "threshold": 5
+                    },
+                    "spike_test": {
+                        "suspect_threshold": 0.01,
+                        "fail_threshold": 0.1,
+                        "method": "average"
+                    },
+                    "attenuated_signal_test": {
+                        "suspect_threshold": 5,
+                        "fail_threshold": 3,
+                        "test_period": 15,
+                        "min_obs": null,
+                        "min_period": null,
+                        "check_type": "range"
+                    },
+                    "density_inversion_test": {
+                        "suspect_threshold": 3,
+                        "fail_threshold": 5
+                    },
+                    "climatology_test": {
+                        "suspect_span": [-2, 3],
+                        "fail_span": [3, 20],
+                        "zspan": [0, 100]
+                    }
+                }
+            },
+            "sea_water_temperature": {
+                "axds": {
+                    "valid_range_test": {
+                        "valid_span": [-5, 35]
+                    }
+                },
+                "qartod": {
+                    "gross_range_test": {
+                        "suspect_span": [20, 35],
+                        "fail_span": [-5, 35]
+                    },
+                    "flat_line_test": {
+                        "tolerance": 0.01,
+                        "suspect_threshold": 300,
+                        "fail_threshold": 900
+                    },
+                    "rate_of_change_test": {
+                        "threshold": 5
+                    },
+                    "spike_test": {
+                        "suspect_threshold": 0.01,
+                        "fail_threshold": 0.02,
+                        "method": "average"
+                    },
+                    "attenuated_signal_test": {
+                        "suspect_threshold": 5,
+                        "fail_threshold": 3,
+                        "test_period": 15,
+                        "min_obs": null,
+                        "min_period": null,
+                        "check_type": "range"
+                    },
+                    "density_inversion_test": {
+                        "suspect_threshold": 3,
+                        "fail_threshold": 5
+                    },
+                    "climatology_test": {
+                        "suspect_span": [-2, 3],
+                        "fail_span": [3, 20],
+                        "zspan": [0, 100]
+                    }
+                }
+            },
+            "sea_water_electrical_conductivity": {
+                "axds": {
+                    "valid_range_test": {
+                        "valid_span": [-5, 35]
+                    }
+                },
+                "qartod": {
+                    "gross_range_test": {
+                        "suspect_span": [20, 35],
+                        "fail_span": [-5, 35]
+                    },
+                    "flat_line_test": {
+                        "tolerance": 0.01,
+                        "suspect_threshold": 300,
+                        "fail_threshold": 900
+                    },
+                    "rate_of_change_test": {
+                        "threshold": 5
+                    },
+                    "spike_test": {
+                        "suspect_threshold": 0.01,
+                        "fail_threshold": 0.02,
+                        "method": "average"
+                    },
+                    "attenuated_signal_test": {
+                        "suspect_threshold": 5,
+                        "fail_threshold": 3,
+                        "test_period": 15,
+                        "min_obs": null,
+                        "min_period": null,
+                        "check_type": "range"
+                    },
+                    "density_inversion_test": {
+                        "suspect_threshold": 3,
+                        "fail_threshold": 5
+                    },
+                    "climatology_test": {
+                        "suspect_span": [-2, 3],
+                        "fail_span": [3, 20],
+                        "zspan": [0, 100]
+                    }
+                }
+            },
+            "sea_water_practical_salinity": {
+                "axds": {
+                    "valid_range_test": {
+                        "valid_span": [-5, 35]
+                    }
+                },
+                "qartod": {
+                    "gross_range_test": {
+                        "suspect_span": [20, 35],
+                        "fail_span": [-5, 35]
+                    },
+                    "flat_line_test": {
+                        "tolerance": 0.01,
+                        "suspect_threshold": 300,
+                        "fail_threshold": 900
+                    },
+                    "rate_of_change_test": {
+                        "threshold": 5
+                    },
+                    "spike_test": {
+                        "suspect_threshold": 0.01,
+                        "fail_threshold": 0.02,
+                        "method": "average"
+                    },
+                    "attenuated_signal_test": {
+                        "suspect_threshold": 5,
+                        "fail_threshold": 3,
+                        "test_period": 15,
+                        "min_obs": null,
+                        "min_period": null,
+                        "check_type": "range"
+                    },
+                    "density_inversion_test": {
+                        "suspect_threshold": 3,
+                        "fail_threshold": 5
+                    },
+                    "climatology_test": {
+                        "suspect_span": [-2, 3],
+                        "fail_span": [3, 20],
+                        "zspan": [0, 100]
+                    }
+                }
+            },
+            "sea_water_ph": {
+                "axds": {
+                    "valid_range_test": {
+                        "valid_span": [-5, 35]
+                    }
+                },
+                "qartod": {
+                    "gross_range_test": {
+                        "suspect_span": [20, 35],
+                        "fail_span": [-5, 35]
+                    },
+                    "flat_line_test": {
+                        "tolerance": 0.01,
+                        "suspect_threshold": 300,
+                        "fail_threshold": 900
+                    },
+                    "rate_of_change_test": {
+                        "threshold": 5
+                    },
+                    "spike_test": {
+                        "suspect_threshold": 0.01,
+                        "fail_threshold": 0.02,
+                        "method": "average"
+                    },
+                    "attenuated_signal_test": {
+                        "suspect_threshold": 5,
+                        "fail_threshold": 3,
+                        "test_period": 15,
+                        "min_obs": null,
+                        "min_period": null,
+                        "check_type": "range"
+                    },
+                    "density_inversion_test": {
+                        "suspect_threshold": 3,
+                        "fail_threshold": 5
+                    },
+                    "climatology_test": {
+                        "suspect_span": [-2, 3],
+                        "fail_span": [3, 20],
+                        "zspan": [0, 100]
+                    }
+                }
+            },
+            "sea_water_dissolved_oxygen": {
+                "axds": {
+                    "valid_range_test": {
+                        "valid_span": [-5, 35]
+                    }
+                },
+                "qartod": {
+                    "gross_range_test": {
+                        "suspect_span": [20, 35],
+                        "fail_span": [-5, 35]
+                    },
+                    "flat_line_test": {
+                        "tolerance": 0.01,
+                        "suspect_threshold": 300,
+                        "fail_threshold": 900
+                    },
+                    "rate_of_change_test": {
+                        "threshold": 5
+                    },
+                    "spike_test": {
+                        "suspect_threshold": 0.01,
+                        "fail_threshold": 0.02,
+                        "method": "average"
+                    },
+                    "attenuated_signal_test": {
+                        "suspect_threshold": 5,
+                        "fail_threshold": 3,
+                        "test_period": 15,
+                        "min_obs": null,
+                        "min_period": null,
+                        "check_type": "range"
+                    },
+                    "density_inversion_test": {
+                        "suspect_threshold": 3,
+                        "fail_threshold": 5
+                    },
+                    "climatology_test": {
+                        "suspect_span": [-2, 3],
+                        "fail_span": [3, 20],
+                        "zspan": [0, 100]
+                    }
+                }
+            },
+            "sea_water_fluorescence": {
+                "axds": {
+                    "valid_range_test": {
+                        "valid_span": [-5, 35]
+                    }
+                },
+                "qartod": {
+                    "gross_range_test": {
+                        "suspect_span": [20, 35],
+                        "fail_span": [-5, 35]
+                    },
+                    "flat_line_test": {
+                        "tolerance": 0.01,
+                        "suspect_threshold": 300,
+                        "fail_threshold": 900
+                    },
+                    "rate_of_change_test": {
+                        "threshold": 5
+                    },
+                    "spike_test": {
+                        "suspect_threshold": 0.01,
+                        "fail_threshold": 0.02,
+                        "method": "average"
+                    },
+                    "attenuated_signal_test": {
+                        "suspect_threshold": 5,
+                        "fail_threshold": 3,
+                        "test_period": 15,
+                        "min_obs": null,
+                        "min_period": null,
+                        "check_type": "range"
+                    },
+                    "density_inversion_test": {
+                        "suspect_threshold": 3,
+                        "fail_threshold": 5
+                    },
+                    "climatology_test": {
+                        "suspect_span": [-2, 3],
+                        "fail_span": [3, 20],
+                        "zspan": [0, 100]
+                    }
+                }
+            },
+            "sea_water_turbidity": {
+                "axds": {
+                    "valid_range_test": {
+                        "valid_span": [-5, 35]
+                    }
+                },
+                "qartod": {
+                    "gross_range_test": {
+                        "suspect_span": [20, 35],
+                        "fail_span": [-5, 35]
+                    },
+                    "flat_line_test": {
+                        "tolerance": 0.01,
+                        "suspect_threshold": 300,
+                        "fail_threshold": 900
+                    },
+                    "rate_of_change_test": {
+                        "threshold": 5
+                    },
+                    "spike_test": {
+                        "suspect_threshold": 0.01,
+                        "fail_threshold": 0.02,
+                        "method": "average"
+                    },
+                    "attenuated_signal_test": {
+                        "suspect_threshold": 5,
+                        "fail_threshold": 3,
+                        "test_period": 15,
+                        "min_obs": null,
+                        "min_period": null,
+                        "check_type": "range"
+                    },
+                    "density_inversion_test": {
+                        "suspect_threshold": 3,
+                        "fail_threshold": 5
+                    },
+                    "climatology_test": {
+                        "suspect_span": [-2, 3],
+                        "fail_span": [3, 20],
+                        "zspan": [0, 100]
+                    }
+                }
+            },
+            "altitude": {
+                "axds": {
+                    "valid_range_test": {
+                        "valid_span": [-5, 35]
+                    }
+                },
+                "qartod": {
+                    "gross_range_test": {
+                        "suspect_span": [20, 35],
+                        "fail_span": [-5, 35]
+                    },
+                    "flat_line_test": {
+                        "tolerance": 0.01,
+                        "suspect_threshold": 300,
+                        "fail_threshold": 900
+                    },
+                    "rate_of_change_test": {
+                        "threshold": 5
+                    },
+                    "spike_test": {
+                        "suspect_threshold": 0.01,
+                        "fail_threshold": 0.02,
+                        "method": "average"
+                    },
+                    "attenuated_signal_test": {
+                        "suspect_threshold": 5,
+                        "fail_threshold": 3,
+                        "test_period": 15,
+                        "min_obs": null,
+                        "min_period": null,
+                        "check_type": "range"
+                    },
+                    "density_inversion_test": {
+                        "suspect_threshold": 3,
+                        "fail_threshold": 5
+                    },
+                    "climatology_test": {
+                        "suspect_span": [-2, 3],
+                        "fail_span": [3, 20],
+                        "zspan": [0, 100]
+                    }
+                }
+            },
+            "depth": {
+                "axds": {
+                    "valid_range_test": {
+                        "valid_span": [-5, 35]
+                    }
+                },
+                "qartod": {
+                    "gross_range_test": {
+                        "suspect_span": [20, 35],
+                        "fail_span": [-5, 35]
+                    },
+                    "flat_line_test": {
+                        "tolerance": 0.01,
+                        "suspect_threshold": 300,
+                        "fail_threshold": 900
+                    },
+                    "rate_of_change_test": {
+                        "threshold": 5
+                    },
+                    "spike_test": {
+                        "suspect_threshold": 0.01,
+                        "fail_threshold": 0.02,
+                        "method": "average"
+                    },
+                    "attenuated_signal_test": {
+                        "suspect_threshold": 5,
+                        "fail_threshold": 3,
+                        "test_period": 15,
+                        "min_obs": null,
+                        "min_period": null,
+                        "check_type": "range"
+                    },
+                    "density_inversion_test": {
+                        "suspect_threshold": 3,
+                        "fail_threshold": 5
+                    },
+                    "climatology_test": {
+                        "suspect_span": [-2, 3],
+                        "fail_span": [3, 20],
+                        "zspan": [0, 100]
+                    }
+                }
+            }
+        }
+    }
+}
