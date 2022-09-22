@@ -122,21 +122,23 @@ Evaulate a data file of ASV CTD readings and apply quality assurence checks foll
 Transform results into NetCDF format following IC standards.
 
 positional arguments:
-  config         Configuration JSON file.
-  input_file     Path to the input sensor data file.
-  header_rows    Number of rows preceeding the row containing column headers.
-  output_dir     Directory for output files.
+  config                Configuration JSON file.
+  input_file            Path to the input sensor data file.
+  output_dir            Directory for output files.
 
 options:
-  -h, --help     show this help message and exit
-  -p, --plot     Create an HTML file containing plots of QC flags.
-  -v, --verbose  Control the amount of information to display.
+  -h, --help            show this help message and exit
+  -l [LOG], --log [LOG]
+                        Path to a log file for script level logging
+  -p, --plot            Create an HTML file containing plots of QC flags. Files are stored under a
+                        subdirectory of the specified output_dir.
+  -v, --verbose         Control the amount of information to display
   ```
 
 #### Example QC Run
 
   ```bash
-  python asv_ctd_qa.py -v -p config.json ./data/received/2021-09-30T15-40-11.0.txt 0 ./data/processed
+  python asv_ctd_qa.py -v config.json ./data/received/2021-09-30T15-40-11.0.txt ./data/processed
   ```
 
 #### Example QC Run using Docker
@@ -147,7 +149,7 @@ docker build -t asv-ctd .
 
 ```bash
 # Bind mount the codebase during development.
-docker run -it --rm -v "$(pwd)":/app asv-ctd python asv_ctd_qa.py -v -p config.json ./data/received/2021-09-30T15-40-11.0.txt 0 ./data/processed
+docker run -it --rm -v "$(pwd)":/app asv-ctd python asv_ctd_qa.py -v config.json ./data/received/2021-09-30T15-40-11.0.txt ./data/processed
 ```
 
 ### Plotting QC Flags
