@@ -1,31 +1,12 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-import datetime
 import logging
-import os
-import sys
 
 import xarray as xr
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-formatter = logging.Formatter(
-    "%(asctime)s : %(msecs)04d : %(name)s : %(levelname)s : %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-log_dir = os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), "logs")
-if not os.path.exists(log_dir):
-    try:
-        os.makedirs(log_dir)
-    except OSError:
-        raise
-log_file = f"log_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-log_path = os.path.join(log_dir, log_file)
-fh = logging.FileHandler(log_path)
-fh.setLevel(logging.INFO)
-fh.setFormatter(formatter)
-logger.addHandler(fh)
 
 
 def ncdump(nc_fid: xr.Dataset, verb=True) -> tuple:
@@ -73,6 +54,9 @@ def ncdump(nc_fid: xr.Dataset, verb=True) -> tuple:
 
     if verb:
         logger.addHandler(logging.StreamHandler())
+    logger.info("=" * 66)
+    logger.info("LOGGING OUTPUT NETCDF ATTRIBUTES")
+
     # NetCDF global attributes
     nc_fid = nc_fid.rootgrp
     nc_attrs = nc_fid.ncattrs()
