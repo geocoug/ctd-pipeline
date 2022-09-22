@@ -7,7 +7,6 @@ import datetime
 import json
 import logging
 import os
-import sys
 
 import netCDF4 as nc
 import numpy as np
@@ -22,8 +21,8 @@ from ioos_qc.qartod import QartodFlags
 from ioos_qc.stores import PandasStore
 from ioos_qc.streams import PandasStream
 
-ERROR_LEVEL = {0: "INFO", 1: "WARNING", 2: "CRITICAL"}
-error_list = []
+# Keyword to look for indicating the start of the data column row
+INIT_COLUMN_ROW = "Date / Time"
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -31,35 +30,6 @@ formatter = logging.Formatter(
     "%(asctime)s : %(msecs)04d : %(name)s : %(levelname)s : %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-log_dir = os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), "logs")
-if not os.path.exists(log_dir):
-    try:
-        os.makedirs(log_dir)
-    except OSError:
-        raise
-log_file = f"log_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-log_path = os.path.join(log_dir, log_file)
-fh = logging.FileHandler(log_path)
-fh.setLevel(logging.INFO)
-fh.setFormatter(formatter)
-logger.addHandler(fh)
-
-
-def print_errors(log: logging.Logger, error_list: list) -> None:
-    error_str = ""
-    for idx, error in enumerate(error_list):
-        error_str = error_str + f"{idx}.  {error[0]}: {error[1]}\n"
-    log.warning(error_str)
-
-
-class ScriptError(Exception):
-    """Script error tracker."""
-
-    def __init__(self, errlvl, errmsg, filename=None):
-        self.errlvl = errlvl
-        self.errmsg = errmsg
-        self.filename = filename
-        error_list.append((self.errlvl, self.errmsg, self.filename))
 
 
 class UnicodeReader:
@@ -104,11 +74,7 @@ class FileParser:
         try:
             dialect = csv.Sniffer().sniff(open(self.filename).readline())
         except Exception:
-            ScriptError(
-                ERROR_LEVEL[2],
-                "Can't open file to determine format.",
-                self.filename,
-            )
+            raise
         try:
             if self.encoding:
                 reader = UnicodeReader(
@@ -119,23 +85,14 @@ class FileParser:
             else:
                 reader = csv.reader(open(self.filename), dialect)
         except Exception:
-            ScriptError(ERROR_LEVEL[2], "Can't open file to read data.", self.filename)
+            raise
         if self.headrows > 0:
             try:
                 for row in range(self.headrows):
                     next(reader)
             except Exception:
-                ScriptError(
-                    ERROR_LEVEL[2],
-                    "Can't read column header line.",
-                    self.filename,
-                )
+                raise
         self.cols = next(reader)
-        # try:
-        #     # Remove blank columns that are result of trailing delimiters
-        #     self.cols.remove("")
-        # except Exception:
-        #     pass
         return reader
 
     def eval_file(self):
@@ -178,8 +135,7 @@ class Parameters(FileParser):
         try:
             self.df = pd.DataFrame(self.data_array, columns=self.cols)
         except Exception:
-            logger.error("Unable to parse input data.")
-            raise ScriptError(ERROR_LEVEL[2], "Unable to parse input data.")
+            raise
 
         keys = {
             key: self.config["parameters"][key]["standard_name"]
@@ -203,7 +159,7 @@ class Parameters(FileParser):
             if len(row) != len(self.cols):
                 flag_arr[idx] = QartodFlags.FAIL
         if np.all(flag_arr == 4):
-            raise ScriptError(ERROR_LEVEL[2], "All syntax tests have failed.")
+            raise Exception("All syntax tests have failed.")
         return flag_arr
 
 
@@ -316,7 +272,7 @@ def create_dir(dir: str) -> None:
         try:
             os.makedirs(dir)
         except OSError:
-            raise ScriptError(ERROR_LEVEL[2], "Cannot create dir.", dir)
+            raise
 
 
 def clparser() -> argparse.ArgumentParser:
@@ -339,13 +295,17 @@ def clparser() -> argparse.ArgumentParser:
         help="Path to the input sensor data file.",
     )
     parser.add_argument(
-        "header_rows",
-        help="""Number of rows preceeding the row
-                        containing column headers.""",
-    )
-    parser.add_argument(
         "output_dir",
         help="Directory for output files.",
+    )
+    parser.add_argument(
+        "-l",
+        "--log",
+        action="store",
+        dest="log",
+        type=str,
+        nargs="?",
+        help="Path to a log file for script level logging",
     )
     parser.add_argument(
         "-p",
@@ -353,7 +313,7 @@ def clparser() -> argparse.ArgumentParser:
         action="store_true",
         dest="plot",
         default=False,
-        help="Create an HTML file containing plots of QC flags.",
+        help="Create an HTML file containing plots of QC flags. Files are stored under a subdirectory of the specified output_dir.",
     )
     parser.add_argument(
         "-v",
@@ -517,10 +477,33 @@ def run_qc(
                     )
 
 
+def get_num_headerrows(infile: str):
+    """Open the input file and check for header rows.
+
+    Searches the start of each line for a substring matching INIT_COLUMN_ROW
+    """
+    try:
+        with open(infile) as f:
+            lines = f.readlines()
+    except OSError:
+        raise
+    header_row = None
+    for idx, line in enumerate(lines):
+        if line[: len(INIT_COLUMN_ROW)] == INIT_COLUMN_ROW:
+            header_row = idx
+            break
+    if header_row is not None:
+        return header_row
+    else:
+        raise Exception(
+            "Could not determine start of data stream. Searched %i lines for string starting with %s."
+            % (idx, INIT_COLUMN_ROW),
+        )
+
+
 def asv_ctd_qa(
     config: str,
     input_file: str,
-    num_headerrows: int,
     output_dir: str,
     plot: bool = False,
     verbose: bool = False,
@@ -529,45 +512,25 @@ def asv_ctd_qa(
 
     # Validate input arguments
     if not os.path.exists(config):
-        raise ScriptError(
-            ERROR_LEVEL[2],
-            "The input configuration file does not exist.",
-            config,
-        )
+        raise OSError("The input configuration file does not exist: %s", config)
     if not os.path.splitext(config)[1] == ".json":
-        raise ScriptError(
-            ERROR_LEVEL[2],
-            "The input configuration file is invalid",
-            config,
-        )
+        raise OSError("The input configuration file is invalid: %s" % config)
     if not os.path.exists(input_file):
-        raise ScriptError(
-            ERROR_LEVEL[2],
-            "The input data file does not exist.",
-            input_file,
-        )
-    try:
-        num_headerrows = int(num_headerrows)
-    except ValueError:
-        raise ScriptError(ERROR_LEVEL[2], "The [num_headerrows] argument is invalid.")
+        raise OSError("The input data file does not exist: %s" % input_file)
+
+    num_headerrows = get_num_headerrows(input_file)
 
     input_file_basefn = os.path.basename(input_file)
     create_dir(output_dir)
-    ncfile_dir = os.path.join(output_dir, "netcdf")
-    create_dir(ncfile_dir)
-    out_ncfile = os.path.join(ncfile_dir, f"{input_file_basefn}.nc")
+    out_ncfile = os.path.join(output_dir, f"{input_file_basefn}.nc")
 
-    if verbose:
-        logger.addHandler(logging.StreamHandler())
     preamble(
         config=config,
         input_file=input_file,
         input_file_basefn=input_file_basefn,
         num_headerrows=num_headerrows,
         output_dir=output_dir,
-        ncfile_dir=ncfile_dir,
         out_ncfile=out_ncfile,
-        log_dir=log_dir,
         plot=plot,
         verbose=verbose,
     )
@@ -576,7 +539,7 @@ def asv_ctd_qa(
         with open(config, "r", encoding="utf-8") as f:
             config_json = json.load(f)
     except OSError:
-        raise ScriptError(ERROR_LEVEL[2], "Could not read config file.", config)
+        raise
 
     logger.info("EVAULATING INPUT FILE")
     parameters = Parameters(
@@ -601,8 +564,6 @@ def asv_ctd_qa(
     run_qc(config_json, parameters, ncfile)
 
     # Pretty print NetCDF file information, also store sections as variables
-    logger.info("=" * 66)
-    logger.info("LOGGING OUTPUT NETCDF ATTRIBUTES")
     nc_attrs, nc_dims, nc_vars = ncdump.ncdump(ncfile, verb=True if verbose else False)
 
     if plot:
@@ -615,11 +576,6 @@ def asv_ctd_qa(
             plot_dir,
             verbose,
         )
-
-    # Check for errors to report on
-    if len(error_list) > 0:
-        if verbose:
-            print_errors(error_list)
 
     logger.info("=" * 66)
     logger.info(
@@ -637,9 +593,23 @@ if __name__ == "__main__":
     # Positional arguments
     config = args.config
     input_file = args.input_file
-    num_headerrows = args.header_rows
     output_dir = args.output_dir
     # Optional
     plot = args.plot
+    log = args.log
     verbose = args.verbose
-    asv_ctd_qa(config, input_file, num_headerrows, output_dir, plot, verbose)
+
+    if verbose:
+        logger.addHandler(logging.StreamHandler())
+    if log:
+        if os.path.dirname(log) and not os.path.exists(os.path.dirname(log)):
+            try:
+                os.makedirs(os.path.dirname(log))
+            except OSError:
+                raise
+        fh = logging.FileHandler(log)
+        fh.setLevel(logging.INFO)
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
+    asv_ctd_qa(config, input_file, output_dir, plot, verbose)
