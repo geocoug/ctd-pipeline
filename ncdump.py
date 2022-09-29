@@ -2,14 +2,19 @@
 # coding=utf-8
 
 import logging
+import os
 
 import xarray as xr
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+formatter = logging.Formatter(
+    "%(asctime)s : %(msecs)04d : %(name)s : %(levelname)s : %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 
-def ncdump(nc_fid: xr.Dataset, verb=True) -> tuple:
+def ncdump(nc_fid: xr.Dataset, verb=False, log=None) -> tuple:
     """
     Ncdump outputs dimensions, variables and their attribute information.
 
@@ -54,6 +59,16 @@ def ncdump(nc_fid: xr.Dataset, verb=True) -> tuple:
 
     if verb:
         logger.addHandler(logging.StreamHandler())
+    if log:
+        if os.path.dirname(log) and not os.path.exists(os.path.dirname(log)):
+            try:
+                os.makedirs(os.path.dirname(log))
+            except OSError:
+                raise
+        fh = logging.FileHandler(log)
+        fh.setLevel(logging.INFO)
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
     logger.info("=" * 66)
     logger.info("LOGGING OUTPUT NETCDF ATTRIBUTES")
 
@@ -66,20 +81,18 @@ def ncdump(nc_fid: xr.Dataset, verb=True) -> tuple:
             logger.info(f"\t{nc_attr}: {repr(nc_fid.getncattr(nc_attr))}")
     nc_dims = [dim for dim in nc_fid.dimensions]  # list of nc dimensions
     # Dimension shape information.
-    if verb:
-        logger.info("NetCDF dimension information:")
-        for dim in nc_dims:
-            logger.info("\tName: %s" % dim)
-            logger.info("\t\tsize: %s" % len(nc_fid.dimensions[dim]))
-            print_ncattr(dim)
+    logger.info("NetCDF dimension information:")
+    for dim in nc_dims:
+        logger.info("\tName: %s" % dim)
+        logger.info("\t\tsize: %s" % len(nc_fid.dimensions[dim]))
+        print_ncattr(dim)
     # Variable information.
     nc_vars = [var for var in nc_fid.variables]  # list of nc variables
-    if verb:
-        logger.info("NetCDF variable information:")
-        for var in nc_vars:
-            if var not in nc_dims:
-                logger.info("\tName: %s" % var)
-                logger.info("\t\tdimensions: %s" % nc_fid.variables[var].dimensions)
-                logger.info("\t\tsize: %s" % nc_fid.variables[var].size)
-                print_ncattr(var)
+    logger.info("NetCDF variable information:")
+    for var in nc_vars:
+        if var not in nc_dims:
+            logger.info("\tName: %s" % var)
+            logger.info("\t\tdimensions: %s" % nc_fid.variables[var].dimensions)
+            logger.info("\t\tsize: %s" % nc_fid.variables[var].size)
+            print_ncattr(var)
     return nc_attrs, nc_dims, nc_vars

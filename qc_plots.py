@@ -100,11 +100,14 @@ def generate_plots(ncfile: str, outdir: str, verbose=True):
     if verbose:
         logger.addHandler(logging.StreamHandler())
 
+    logger.info("=" * 66)
+    logger.info("CREATING OBSERVATION PLOTS WITH QC FLAGS")
+
     outdir = os.path.join(outdir, os.path.basename(ncfile))
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    data = xr.open_dataset(ncfile)
+    data = xr.open_dataset(ncfile, decode_times=False)
     variables = {}
     for name in data.cf.standard_names:
         if "status_flag" in name:
@@ -122,28 +125,41 @@ def generate_plots(ncfile: str, outdir: str, verbose=True):
                     <title>ASV CTD QARTOD Plots</title>
                     <meta charset="utf-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1">
-                    <script src="https://kit.fontawesome.com/9d6352f212.js" crossorigin="anonymous"></script>
-                    <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
-                    <link rel="stylesheet" href="assets/whistler.css" type="text/css" />
                     <!-- Bootstrap CSS (v5) -->
-                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
-                    <link rel="stylesheet" href="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.css"/>
+                    <link
+                        href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css"
+                        rel="stylesheet"
+                        integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx"
+                        crossorigin="anonymous">
+                    <link
+                        rel="stylesheet"
+                        href="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.css"
+                    />
+
+                    <!-- jQuery first, then Popper.js + Bootstrap JS -->
+                    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+                    <!-- JavaScript Bundle with Popper -->
+                    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
+                    <script src="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js"></script>
+                    <!-- ajax -->
+                    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
                 </head>
                 <body data-bs-spy="scroll" data-bs-target="#toc">
                     <div class="container-fluid m-2 p-2">
                         <h1>Plots for {base_ncfile}</h1>
                         <hr>
-                        <div class="row">
-                        <div class="col-sm-3 p-3">
-                            <nav id="toc" data-toggle="toc" class="sticky-top"></nav>
-                        </div>
+                        <div class="row justify-content-center">
+                            <div class="col-sm-3 p-3 mt-3">
+                                <nav id="toc" data-toggle="toc" class="sticky-top"></nav>
+                            </div>
                         <div class="col-sm-9">
         """,
         )
         for var in variables:
-            logger.info(f"    {var}")
+            logger.info(f"  {var}")
             f.write(f"""<h3>{var}</h3>""")
             for qc in variables[var]:
+                # logger.info(f"    {qc}")
                 f.write(f"""<div class="row"><h4>{qc}</h4>""")
                 plot_results(
                     data,
@@ -160,13 +176,6 @@ def generate_plots(ncfile: str, outdir: str, verbose=True):
             """
                 </div>
                 </div>
-                <!-- jQuery first, then Popper.js + Bootstrap JS -->
-                <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-                <!-- JavaScript Bundle with Popper -->
-                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
-                <script src="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js"></script>
-                <!-- ajax -->
-                <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
                 </body>
             </html>
                 """,
