@@ -14,8 +14,6 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
   - [ ] [Standard names (with search)](https://cfconventions.org/Data/cf-standard-names/76/build/cf-standard-name-table.html)
   - [ ] [Standard names](http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml)
 - [ ] Validate [config.json](./config.json) - either on a per-run basis or on update.
-- [ ] Run NetCDF [compliance checker](https://github.com/ioos/compliance-checker)
-  - Latest compliance check: [compliance_check.txt](./compliance_check.txt)
 
 ## Setup
 
@@ -105,8 +103,8 @@ IOOS QC test configurations are defined in [global.json](global.json). Below is 
       "fail_threshold": 5                   // A float value representing a maximum potential density(or sigma0) variation to be tolerated, downward density variation exceeding this will be flagged as FAIL.
     },
     "climatology_test": {               // Checks that values are within reasonable range bounds and flags as SUSPECT.
-      "suspect_span": [20, 35],              // (optional) 2-tuple range of valid values. This is passed in as the fail_span to the gross_range_test.
-      "fail_span": [-5, 35],                  // 2-tuple range of valid values. This is passed in as the suspect_span to the gross_range test.
+      "suspect_span": [20, 35],              // (optional) 2-tuple range of valid values. This is passed in as the suspect_span to the gross_range_test.
+      "fail_span": [-5, 35],                  // 2-tuple range of valid values. This is passed in as the fail_span to the gross_range test.
       "zspan": [0, 100]
     }
   }
@@ -116,10 +114,10 @@ IOOS QC test configurations are defined in [global.json](global.json). Below is 
 ### Run QC Checks
 
   ```bash
-usage: asv_ctd_qa.py [-h] [-p] [-v] config input_file header_rows output_dir
+usage: asv_ctd_qa.py [-h] [-l [LOG]] [-p] [-v] [-c] config input_file output_dir
 
-Evaulate a data file of ASV CTD readings and apply quality assurence checks following QARTOD methods and assigning data quality flags as appropriate.
-Transform results into NetCDF format following IC standards.
+Evaulate a data file of ASV CTD readings and apply quality assurence checks following QARTOD methods and
+assigning data quality flags as appropriate. Transform results into NetCDF format following IC standards.
 
 positional arguments:
   config                Configuration JSON file.
@@ -130,9 +128,9 @@ options:
   -h, --help            show this help message and exit
   -l [LOG], --log [LOG]
                         Path to a log file for script level logging
-  -p, --plot            Create an HTML file containing plots of QC flags. Files are stored under a
-                        subdirectory of the specified output_dir.
-  -v, --verbose         Control the amount of information to display
+  -p, --plot            Create an HTML file containing plots of QC flags. Files are stored under a subdirectory of the specified output_dir.
+  -v, --verbose         Control the amount of information to display.
+  -c, --compliance      Run IOOS compliance checker on compiled NetCDF file.
   ```
 
 #### Example QC Run
@@ -148,7 +146,6 @@ docker build -t asv-ctd .
 ```
 
 ```bash
-# Bind mount the codebase during development.
 docker run -it --rm -v "$(pwd)":/app asv-ctd python asv_ctd_qa.py -v config.json ./data/received/2021-09-30T15-40-11.0.txt ./data/processed
 ```
 
@@ -174,6 +171,14 @@ options:
 
 Use the `netcdf` package, which can be downloaded using Homebrew. Or, use the [ncdump.py](./ncdump.py) utility.
 
+### CF Compliance Checks
+
+- Compliance checks can be performed on output NetCDF via the [compliance checker](https://github.com/ioos/compliance-checker) command line utility:
+
+```bash
+compliance-checker -v --test cf:1.6 -f html -o data/processed/2022-09-28T19-18-42.0.txt.nc.compliance.html data/processed/2022-09-28T19-18-42.0.txt.nc
+```
+
 ## Notes
 
 - `config.json` file contains acceptable ranges for each type of sensor data.
@@ -187,6 +192,10 @@ Use the `netcdf` package, which can be downloaded using Homebrew. Or, use the [n
 #### qartod.py
 
 1. [time_interval](https://github.com/IntegralEnvision/asv-ctd-qa/commit/a249dd4ee84f719696fb31ecd6eabd9edd0f6a33#diff-32c09032f00f303300ace35369debee33af51ceb355defcce878c489bdc3af6aR646) calculation. CTD collection times can be < 1 second apart causing the number of observations to appear as 0.
+
+#### streams.py
+
+1. Updated `self.lat_column` from `lat` to `longitude` and `self.lon_column` from `lon` to `longitude` in [`PandasStream().__init__()`](https://github.com/ioos/ioos_qc/blob/093935e0f2c21a6a585bda5a194fc7a2c7aedd76/ioos_qc/streams.py#L49)
 
 ## Data String Configuration (tab delimited)
 
@@ -203,11 +212,6 @@ Use the `netcdf` package, which can be downloaded using Homebrew. Or, use the [n
 - Calculated Depth (meters)
 - Latitude (degrees)
 - Longitude (degrees)
-
-## QA/QC & Compliance Checks
-
-- Quality control testing is implemented using the [qartod](https://ioos.github.io/ioos_qc/api/ioos_qc.html#module-ioos_qc.qartod) module of the [ioos_qc](https://github.com/ioos/ioos_qc) Python library. See also example implentations for [Gliders](https://github.com/ioos/glider-dac).
-- Compliance checks can be performed on the resulting output NetCDF via a [compliance checker](https://github.com/ioos/compliance-checker)
 
 ## Help
 

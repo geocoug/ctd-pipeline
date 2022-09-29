@@ -12,6 +12,7 @@ import netCDF4 as nc
 import numpy as np
 import pandas as pd
 from cf_units import Unit  # noqa
+from compliance_checker.runner import CheckSuite, ComplianceChecker
 
 import ncdump
 import qc_plots
@@ -162,6 +163,23 @@ class Parameters(FileParser):
             raise Exception("All syntax tests have failed.")
         return flag_arr
 
+    def convert_units(self):
+        for variable in self.config["parameters"]:
+            p = self.config["parameters"][variable]
+            if "original_units" in p:
+                if p["original_units"] != p["units"]:
+                    v = p["standard_name"]
+                    _from = p["original_units"]
+                    _to = p["units"]
+                    logger.info("CONVERTING {} UNITS {} --> {}".format(v, _from, _to))
+                    try:
+                        self.df[v] = Unit(_from).convert(
+                            self.df[v].to_numpy(),
+                            Unit(_to),
+                        )
+                    except Exception:
+                        raise
+
 
 class NetCDF:
     """Create a NetCDF object and provide methods for adding self-describing attributes."""
@@ -176,7 +194,14 @@ class NetCDF:
 
     def metadata(self) -> None:
         for attr in self.config["attributes"]:
-            setattr(self.rootgrp, attr, self.config["attributes"][attr])
+            if attr == "history":
+                setattr(
+                    self.rootgrp,
+                    attr,
+                    f"{self.config['attributes'][attr]} {datetime.datetime.now().isoformat()}",
+                )
+            else:
+                setattr(self.rootgrp, attr, self.config["attributes"][attr])
 
     def create_dimensions(self) -> None:
         self.rootgrp.createDimension("time", None)
@@ -189,7 +214,8 @@ class NetCDF:
     ) -> None:
         # if df['ts'] = df.datetime.astype('int64')
         if variables["standard_name"] == "time":
-            dtype = "int64"
+            # dtype = "int64"
+            dtype = "f8"
         else:
             dtype = variables["dtype"]
         v = self.rootgrp.createVariable(
@@ -214,8 +240,6 @@ class NetCDF:
         variables: dict,
     ) -> None:
 
-        # Include syntax_test, rollup_qc, location_test, check_timestamps
-
         v = self.rootgrp.createVariable(
             test_name,
             np.int8,
@@ -232,8 +256,6 @@ class NetCDF:
             elif type(variables[attr]) == pd.Series:
                 setattr(v, attr, variables[attr.to_numpy()])
             elif attr == "config":
-                # for c in attr:
-                # print(c, attr[c])
                 for member in variables[attr].members:
                     setattr(v, "config_fspan_minv", float(member.fspan.minv))
                     setattr(v, "config_fspan_maxv", float(member.fspan.maxv))
@@ -322,6 +344,14 @@ def clparser() -> argparse.ArgumentParser:
         dest="verbose",
         default=False,
         help="Control the amount of information to display.",
+    )
+    parser.add_argument(
+        "-c",
+        "--compliance",
+        action="store_true",
+        dest="compliance_check",
+        default=False,
+        help="Run IOOS compliance checker on compiled NetCDF file.",
     )
     return parser
 
@@ -425,12 +455,6 @@ def run_qc(
             ].to_numpy()
             season, window_start, window_end = current_time_window()
 
-            # Remove this
-            # ================
-            # window_start = datetime.datetime.strptime("2020-01-01", "%Y-%m-%d")
-            # window_end = datetime.datetime.strptime("2022-12-31", "%Y-%m-%d")
-            # ================
-
             cc = qartod.ClimatologyConfig()
             cc.add(
                 tspan=tuple([window_start, window_end]),
@@ -450,7 +474,6 @@ def run_qc(
                     ),
                 ),
             )
-            # print(cc.members)
             variable_config["qartod"]["climatology_test"]["config"] = cc
         # Add global tests
         variable_config["qartod"].update(config["ioos_qc"]["global"]["qartod"])
@@ -459,14 +482,11 @@ def run_qc(
     qc = QcConfig(ioos_qc_config["variables"])
     qc_results = ps.run(qc)
     store = PandasStore(qc_results)
-    store.compute_aggregate()
     results_store = store.save(write_data=False, write_axes=False)
-
     for variable in ioos_qc_config["variables"]:
         for test_type in ioos_qc_config["variables"][variable]:
             for test in ioos_qc_config["variables"][variable][test_type]:
                 test_name = f"{variable}_{test_type}_{test}"
-                # print(ioos_qc_config["variables"][variable][test_type])
                 logger.info(f"RUNNING TEST {test_name}")
                 if ioos_qc_config["variables"][variable][test_type][test] is not None:
                     ncfile.create_test_variables(
@@ -475,6 +495,18 @@ def run_qc(
                         test_name,
                         ioos_qc_config["variables"][variable][test_type][test],
                     )
+        # Apply primary QC flag which is an aggregate of all other QC tests
+        flags = results_store[[c for c in results_store.columns if variable in c]]
+        rollup_var = f"{variable}_rollup_qc"
+        results_store[rollup_var] = qartod.qartod_compare(
+            [flags[c].to_numpy() for c in flags],
+        )
+        ncfile.create_test_variables(
+            results_store,
+            variable,
+            rollup_var,
+            {},
+        )
 
 
 def get_num_headerrows(infile: str):
@@ -507,6 +539,8 @@ def asv_ctd_qa(
     output_dir: str,
     plot: bool = False,
     verbose: bool = False,
+    log=None,
+    compliance_check: bool = False,
 ) -> None:
     """Run IOOS QC tests."""
 
@@ -552,9 +586,13 @@ def asv_ctd_qa(
     logger.info("~" * 66)
     parameters.parameter_dataframe()
 
+    parameters.convert_units()
+
     ncfile = NetCDF(config_json, out_ncfile)
     for parameter in config_json["parameters"]:
-        logger.info(f"CREATING ATTRIBUTES FOR {parameter}")
+        logger.info(
+            f"CREATING ATTRIBUTES FOR {config_json['parameters'][parameter]['standard_name']}",
+        )
         ncfile.create_ancillary_variables(
             parameters.df[config_json["parameters"][parameter]["standard_name"]],
             parameter,
@@ -564,11 +602,33 @@ def asv_ctd_qa(
     run_qc(config_json, parameters, ncfile)
 
     # Pretty print NetCDF file information, also store sections as variables
-    nc_attrs, nc_dims, nc_vars = ncdump.ncdump(ncfile, verb=True if verbose else False)
+    nc_attrs, nc_dims, nc_vars = ncdump.ncdump(
+        ncfile,
+        verb=True if verbose else False,
+        log=log,
+    )
+
+    if compliance_check:
+        logger.info("=" * 66)
+        logger.info("RUNNING CF COMPLIANCE CHECKS")
+        check_suite = CheckSuite()
+        check_suite.load_all_available_checkers()
+        compliance_dir = os.path.join(output_dir, "compliance_checks")
+        convention = json.dumps(config_json["attributes"]["Conventions"]).strip('"')
+        create_dir(compliance_dir)
+        ComplianceChecker.run_checker(
+            ds_loc=out_ncfile,
+            checker_names=[convention.replace("-", ":").lower()],
+            verbose=verbose,
+            criteria="normal",
+            output_filename=os.path.join(
+                compliance_dir,
+                f"{os.path.basename(out_ncfile)}.compliance.html",
+            ),
+            output_format="html",
+        )
 
     if plot:
-        logger.info("=" * 66)
-        logger.info("CREATING OBSERVATION PLOTS WITH QC FLAGS")
         plot_dir = os.path.join(output_dir, "plots")
         create_dir(plot_dir)
         qc_plots.generate_plots(
@@ -598,6 +658,7 @@ if __name__ == "__main__":
     plot = args.plot
     log = args.log
     verbose = args.verbose
+    compliance_check = args.compliance_check
 
     if verbose:
         logger.addHandler(logging.StreamHandler())
@@ -612,4 +673,4 @@ if __name__ == "__main__":
         fh.setFormatter(formatter)
         logger.addHandler(fh)
 
-    asv_ctd_qa(config, input_file, output_dir, plot, verbose)
+    asv_ctd_qa(config, input_file, output_dir, plot, verbose, log, compliance_check)
