@@ -6,6 +6,7 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
 
 ## To-Do
 
+- [ ] Pull latest for [ioos_qc](https://github.com/ioos/ioos_qc)
 - [ ] Comply with [CF Conventions](http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html)
   - [ ] [Standard names (with search)](https://cfconventions.org/Data/cf-standard-names/76/build/cf-standard-name-table.html)
   - [ ] [Standard names](http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml)
