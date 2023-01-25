@@ -1,6 +1,9 @@
 #!/usr/bin/env python
-# coding=utf-8
 
+"""qc_plots.py.
+
+Generate plot figures of parameters and QC flags in a NetCDF file.
+"""
 import argparse
 import logging
 import os
@@ -14,12 +17,28 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 # Suppress warning -- writing a lot of figures
 plt.rcParams["figure.max_open_warning"] = 0
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger = logging.getLogger("__main__")
 
 
-def plot_results(data, variable_name, results, title, test_name, outdir):
-    """Create plot figures and save as PNG."""
+def plot_results(
+    data: dict,
+    variable_name: str,
+    results: dict,
+    title: str,
+    test_name: str,
+    outdir: str,
+) -> None:
+    """Create plot figures and save as PNG.
+
+    Args:
+    ----
+        data (dict): Data set with QC flaggs.
+        variable_name (str): Original parameter name.
+        results (dict): Parameter results.
+        title (str): Plot title.
+        test_name (str): Name of QC test.
+        outdir (str): Output directory to save plot.
+    """
     time = data["time"]
     obs = data[variable_name]
     qc_test = results[test_name]
@@ -28,7 +47,6 @@ def plot_results(data, variable_name, results, title, test_name, outdir):
     qc_notrun = np.ma.masked_where(qc_test != 2, obs)
     qc_suspect = np.ma.masked_where(qc_test != 3, obs)
     qc_fail = np.ma.masked_where(qc_test != 4, obs)
-
     fig, ax = plt.subplots(figsize=(15, 3.75))
 
     ax.set_xlabel("time")
@@ -72,7 +90,7 @@ def plot_results(data, variable_name, results, title, test_name, outdir):
 
 
 def clparser() -> argparse.ArgumentParser:
-    """Create a parser to handle input arguments and displaying a script specific help message."""
+    """Create a parser to handle input arguments."""
     desc_msg = """Create plots of ASV CTD cast data with QARTOD flags."""
     parser = argparse.ArgumentParser(description=desc_msg)
     parser.add_argument("ncfile", help="Path to the input NetCDF file.")
@@ -88,34 +106,27 @@ def clparser() -> argparse.ArgumentParser:
     return parser
 
 
-def generate_plots(ncfile: str, outdir: str, verbose=True):
+def generate_plots(ncfile: str, outdir: str) -> None:
     """Generate plots of CTD observations overlayed with QARTOD flags.
 
     Each plot is saved as a PNG and incorperated into a single HTML file.
 
-    :ncfile: NetCDF file containing observations and QARTOD flags.
-
-    Returns an HTML file
+    Args:
+    ----
+        ncfile (str): NetCDF file containing observations and QARTOD flags.
+        outdir (str): Output directory.
     """
-    if verbose:
-        logger.addHandler(logging.StreamHandler())
-
-    logger.info("=" * 66)
     logger.info("CREATING OBSERVATION PLOTS WITH QC FLAGS")
-
     outdir = os.path.join(outdir, os.path.basename(ncfile))
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-
     data = xr.open_dataset(ncfile, decode_times=False)
     variables = {}
     for name in data.cf.standard_names:
         if "status_flag" in name:
             variables.update({name.split()[0]: data.cf.standard_names[name]})
-
     base_ncfile = os.path.basename(ncfile)
     plot_html = os.path.join(outdir, f"{base_ncfile}.html")
-
     with open(plot_html, "w", encoding="utf-8") as f:
         f.write(
             f"""
@@ -137,12 +148,24 @@ def generate_plots(ncfile: str, outdir: str, verbose=True):
                     />
 
                     <!-- jQuery first, then Popper.js + Bootstrap JS -->
-                    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+                    <script
+                        src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+                        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+                        crossorigin="anonymous">
+                    </script>
                     <!-- JavaScript Bundle with Popper -->
-                    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
-                    <script src="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js"></script>
+                    <script
+                        src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"
+                        integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa"
+                        crossorigin="anonymous">
+                    </script>
+                    <script
+                        src="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js">
+                    </script>
                     <!-- ajax -->
-                    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+                    <script
+                        src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js">
+                    </script>
                 </head>
                 <body data-bs-spy="scroll" data-bs-target="#toc">
                     <div class="container-fluid m-2 p-2">
@@ -150,7 +173,8 @@ def generate_plots(ncfile: str, outdir: str, verbose=True):
                         <hr>
                         <div class="row justify-content-center">
                             <div class="col-sm-3 p-3 mt-3">
-                                <nav id="toc" data-toggle="toc" class="sticky-top"></nav>
+                                <nav id="toc" data-toggle="toc" class="sticky-top">
+                                </nav>
                             </div>
                         <div class="col-sm-9">
         """,
@@ -182,13 +206,17 @@ def generate_plots(ncfile: str, outdir: str, verbose=True):
         )
 
 
-def main():
+def main() -> None:
+    """Main entrypoint."""
     parser = clparser()
     args = parser.parse_args()
     ncfile = args.ncfile
     outdir = args.outdir
     verbose = args.verbose
-    generate_plots(ncfile, outdir, verbose)
+    if verbose:
+        logger.addHandler(logging.StreamHandler())
+        logger.setLevel(logging.INFO)
+    generate_plots(ncfile, outdir)
 
 
 if __name__ == "__main__":

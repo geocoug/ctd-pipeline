@@ -15,8 +15,8 @@ respect-gitignore = true
 # A list of rule codes or prefixes to enable.
 # Prefixes can specify exact rules (like F841), entire categories (like F), or anything in between.
 # Default = Pyflakes `E` and `F` codes.
-select = ["E", "F", "Q", "B", "I", "D", "UP", "N", "ANN", "S", "C4", "T20", "RET", "SIM", "PD", "RUF"]
-ignore = ["D100", "D104", "D203", "D213", "D400", "S101"]
+select = ["E", "F", "Q", "B", "I", "UP", "N", "ANN", "S", "C4", "T20", "RET", "RUF"]
+ignore = ["D", "S101"]
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 # Assume Python 3.11.

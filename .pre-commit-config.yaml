@@ -1,8 +1,14 @@
 ---
+exclude: |
+    (?x)(
+        ^ioos_qc/|
+        ^examples/
+    )
+
 repos:
   # Protect secrets using Gitleaks
   - repo: https://github.com/zricethezav/gitleaks
-    rev: v8.15.2
+    rev: v8.15.3
     hooks:
       - id: gitleaks
   # Supported base hooks
@@ -24,12 +30,6 @@ repos:
     hooks:
       - id: yamllint
         args: [--config-file, ./.github/linters/.yaml-lint.yml]
-  # SQL linter
-  - repo: https://github.com/sqlfluff/sqlfluff
-    rev: 2.0.0a3
-    hooks:
-      - id: sqlfluff-lint
-        args: [--config, ./.github/linters/.sqlfluff]
   # Markdown lint
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.33.0
@@ -50,7 +50,7 @@ repos:
   # PEP 8 style guide, error and complexity checks
   # Replaces Flake8, isort, pydocstyle, pyupgrade, bandit, and autoflake
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.224
+    rev: v0.0.233
     hooks:
       - id: ruff
         args: [--config=./.github/linters/ruff.toml]
