@@ -21,6 +21,8 @@ from ioos_qc.config import QcConfig
 from ioos_qc.qartod import QartodFlags
 from ioos_qc.stores import PandasStore
 from ioos_qc.streams import PandasStream
+
+# from ioos_qc.utils import check_timestamps
 from utils.compliance import Compliance
 
 # Keyword to look for indicating the start of the data column row
@@ -206,6 +208,10 @@ class Parameters(FileParser):
         log_variables(keys)
         self.df.rename(columns=keys, inplace=True)
         self.df["syntax_test"] = self.syntax_test()
+        self.df["gap_test"] = self.gap_test(
+            pd.to_datetime(self.df["time"]),
+            self.config["ioos_qc"]["global"]["gap_test"]["max_time_interval"],
+        )
         for key in keys:
             self.df[keys[key]] = self.df[keys[key]].astype(
                 self.config["parameters"][key]["dtype"],
@@ -213,6 +219,9 @@ class Parameters(FileParser):
 
     def syntax_test(self: "Parameters") -> npt.ArrayLike:
         """Syntax test.
+
+        Checks that data row is read as expected, matching the number
+        of column headers in the data file.
 
         Returns
         -------
@@ -226,6 +235,33 @@ class Parameters(FileParser):
                 flag_arr[idx] = QartodFlags.FAIL
         if np.all(flag_arr == 4):
             raise Exception("All syntax tests have failed.")
+        return flag_arr
+
+    def gap_test(
+        self: "Parameters",
+        times: np.ndarray,
+        max_time_interval: int = 1,
+    ) -> npt.ArrayLike:
+        """Sanity checks for timestamp arrays
+        Checks that the times supplied are in monotonically increasing
+        chronological order, and optionally that time intervals between
+        measurements do not exceed a value `max_time_interval`.  Note that this is
+        not a QARTOD test, but rather a utility test to make sure times are in the
+        proper order and optionally do not have large gaps prior to processing the
+        data.
+        Args:
+            times: Input array of timestamps
+            max_time_interval: The interval between values should not exceed this
+                value (seconds). Defaults to 1
+        """
+        flag_arr = np.ma.ones(len(times), dtype="uint8")
+        fail_interval = np.timedelta64(max_time_interval, "s")
+
+        time_diff = np.diff(times)
+        if np.any(time_diff > fail_interval):
+            for idx, time in enumerate(time_diff):
+                if time > fail_interval:
+                    flag_arr[idx + 1] = QartodFlags.FAIL
         return flag_arr
 
 
@@ -364,7 +400,13 @@ class NetCDF:
                     v.config_zspan_maxv = float(member.zspan.maxv)
             else:
                 setattr(v, attr, variables[attr])
-        v[:] = data[test_name].to_numpy()
+
+        if "syntax_test" in test_name:
+            v[:] = data["syntax_test"].to_numpy()
+        elif "gap_test" in test_name:
+            v[:] = data["gap_test"].to_numpy()
+        else:
+            v[:] = data[test_name].to_numpy()
 
 
 def create_dir(dir: str) -> None:
@@ -523,6 +565,7 @@ def run_qc(
     """
 
     ioos_qc_config = config["ioos_qc"]
+
     for variable in ioos_qc_config["variables"]:
         variable_config = ioos_qc_config["variables"][variable]
         if "valid_range_test" in variable_config["axds"]:
@@ -555,12 +598,12 @@ def run_qc(
                 tspan=(window_start, window_end),
                 fspan=tuple(
                     np.array(
-                        variable_config["qartod"]["climatology_test"]["fail_span"],
+                        variable_config["qartod"]["gross_range_test"]["fail_span"],
                     ),
                 ),
                 vspan=tuple(
                     np.array(
-                        variable_config["qartod"]["climatology_test"]["suspect_span"],
+                        variable_config["qartod"]["gross_range_test"]["suspect_span"],
                     ),
                 ),
                 zspan=tuple(
@@ -573,11 +616,14 @@ def run_qc(
         # Add global tests
         variable_config["qartod"].update(config["ioos_qc"]["global"]["qartod"])
 
+    # Run the tests and store results
     ps = PandasStream(parameters.df)
     qc = QcConfig(ioos_qc_config["variables"])
     qc_results = ps.run(qc)
     store = PandasStore(qc_results)
     results_store = store.save(write_data=False, write_axes=False)
+
+    # Write results to netcdf
     for variable in ioos_qc_config["variables"]:
         for test_type in ioos_qc_config["variables"][variable]:
             for test in ioos_qc_config["variables"][variable][test_type]:
@@ -590,6 +636,27 @@ def run_qc(
                         test_name,
                         ioos_qc_config["variables"][variable][test_type][test],
                     )
+
+        # Add syntax test results. This isnt run by ioos_qc.
+        var = f"{variable}_qartod_syntax_test"
+        ncfile.create_test_variables(
+            parameters.df,
+            variable,
+            f"{variable}_qartod_syntax_test",
+            {},
+        )
+        results_store[var] = parameters.df["syntax_test"]
+
+        # Add timestamp test results. This isnt run by ioos_qc.
+        var = f"{variable}_qartod_gap_test"
+        ncfile.create_test_variables(
+            parameters.df,
+            variable,
+            f"{variable}_qartod_gap_test",
+            config["ioos_qc"]["global"]["gap_test"],
+        )
+        results_store[var] = parameters.df["gap_test"]
+
         # Apply primary QC flag which is an aggregate of all other QC tests
         flags = results_store[[c for c in results_store.columns if variable in c]]
         rollup_var = f"{variable}_rollup_qc"
@@ -750,8 +817,8 @@ def asv_ctd_qa(
     # Pretty print NetCDF file information, also store sections as variables
     nc_attrs, nc_dims, nc_vars = ncdump.ncdump(
         ncfile,
-        # verb=bool(verbose),
-        # log=log,
+        verb=bool(verbose),
+        log=log,
     )
 
     if compliance_check:

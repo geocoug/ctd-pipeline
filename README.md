@@ -39,11 +39,24 @@ Using [Python](https://www.python.org/downloads/release/python-3100/) version 3.
 
 IOOS QC test configurations are defined in [config.json](config.json). Below is an example QC configuration for the parameter `pressure`. Keys directly correlate to QC functions and arguments in the [ioos_qc](https://github.com/ioos/ioos_qc) library.
 
+next meeting feb 6
+
+Suspect spans are +- 10% of sensor capabilities.
+
+spike test 1/4 and a half
+flat line - 5 and 15 min
+
+use 1/4 of sensor for suspect
+
+temp
+suspect = 5
+fail = 10
+
 ```json
 "pressure": {              // Standard CF-safe parameter name
-  "argo": {                         // Tests based on the ARGO QC manual
-    "pressure_increasing_test": null    // Check if pressure does not monotonically increase
-  },
+  // "argo": {                         // Tests based on the ARGO QC manual
+  //   "pressure_increasing_test": null    // Check if pressure does not monotonically increase
+  // },
   "axds": {                         // Tests based on the IOOS QC manual
     "valid_range_test": {               // Checks that values are within a min/max range. This is not unlike a `qartod.gross_range_test` with fail and suspect bounds being equal, except that here we specify the inclusive range that should pass instead of the exclusive bounds which should fail
       "valid_span": [-5, 35]                // Values outside the range will FAIL
@@ -69,22 +82,22 @@ IOOS QC test configurations are defined in [config.json](config.json). Below is 
                                                 // "average": Determine if there is a spike at data point n-1 by subtracting the midpoint of n and n-2 and taking the absolute value of this quantity, and checking if it exceeds a low or high threshold.
                                                 // "differential": Determine if there is a spike at data point n by calculating the difference between n and n-1 and n+1 and n variation. To considered, (n - n-1)*(n+1 - n) should be smaller than zero (in opposite direction).
     },
-    "attenuated_signal_test": {         // Check for near-flat-line conditions using a range or standard deviation.
-      "suspect_threshold": 5,               // Any calculated value below this amount will be flagged as SUSPECT. In observations units.
-      "fail_threshold": 3,                  // Any calculated values below this amount will be flagged as FAIL. In observations units.
-      "test_period": 15,                    // Length of time to test over in seconds [optional]. Otherwise, will test against entire `inp`.
-      "min_obs": null,                      // Minimum number of observations in window required to calculate a result [optional]. Otherwise, test will start at beginning of time series. Note: you can specify either `min_obs` or `min_period`, but not both.
-      "min_period": null,                   // Minimum number of seconds in test_period required to calculate a result [optional]. Otherwise, test will start at beginning of time series. Note: you can specify either `min_obs` or `min_period`, but not both.
-      "check_type": "range"                 // Either 'std' (default) or 'range', depending on the type of check you wish to perform.
-    },
-    "density_inversion_test": {         // With few exceptions, potential water density will increase with increasing pressure. When vertical profile data is obtained, this test is used to flag as failed T, C, and SP observations, which yield densities that do not sufficiently increase with pressure. A small operator-selected density threshold (DT) allows for micro-turbulent exceptions.
-      "suspect_threshold": 3,               // A float value representing a maximum potential density(or sigma0) variation to be tolerated, downward density variation exceeding this will be flagged as SUSPECT.
-      "fail_threshold": 5                   // A float value representing a maximum potential density(or sigma0) variation to be tolerated, downward density variation exceeding this will be flagged as FAIL.
-    },
+    // "attenuated_signal_test": {         // Check for near-flat-line conditions using a range or standard deviation.
+    //   "suspect_threshold": 5,               // Any calculated value below this amount will be flagged as SUSPECT. In observations units.
+    //   "fail_threshold": 3,                  // Any calculated values below this amount will be flagged as FAIL. In observations units.
+    //   "test_period": 15,                    // Length of time to test over in seconds [optional]. Otherwise, will test against entire `inp`.
+    //   "min_obs": null,                      // Minimum number of observations in window required to calculate a result [optional]. Otherwise, test will start at beginning of time series. Note: you can specify either `min_obs` or `min_period`, but not both.
+    //   "min_period": null,                   // Minimum number of seconds in test_period required to calculate a result [optional]. Otherwise, test will start at beginning of time series. Note: you can specify either `min_obs` or `min_period`, but not both.
+    //   "check_type": "range"                 // Either 'std' (default) or 'range', depending on the type of check you wish to perform.
+    // },
+    // "density_inversion_test": {         // With few exceptions, potential water density will increase with increasing pressure. When vertical profile data is obtained, this test is used to flag as failed T, C, and SP observations, which yield densities that do not sufficiently increase with pressure. A small operator-selected density threshold (DT) allows for micro-turbulent exceptions.
+    //   "suspect_threshold": 3,               // A float value representing a maximum potential density(or sigma0) variation to be tolerated, downward density variation exceeding this will be flagged as SUSPECT.
+    //   "fail_threshold": 5                   // A float value representing a maximum potential density(or sigma0) variation to be tolerated, downward density variation exceeding this will be flagged as FAIL.
+    // },
     "climatology_test": {               // Checks that values are within reasonable range bounds and flags as SUSPECT.
-      "suspect_span": [20, 35],              // (optional) 2-tuple range of valid values. This is passed in as the suspect_span to the gross_range_test.
+      "suspect_span": [20, 35],               // (optional) 2-tuple range of valid values. This is passed in as the suspect_span to the gross_range_test.
       "fail_span": [-5, 35],                  // 2-tuple range of valid values. This is passed in as the fail_span to the gross_range test.
-      "zspan": [0, 100]
+      "zspan": [0, 100]                       // zspan: (optional) Vertical (depth) range, in meters positive down
     }
   }
 }
