@@ -1,18 +1,8 @@
 # asv-ctd-qa
 
-[![ci](https://github.com/IntegralEnvision/asv-ctd-qa/actions/workflows/ci.yml/badge.svg)](https://github.com/IntegralEnvision/asv-ctd-qa/actions/workflows/ci.yml)
+[![ci](https://github.com/IntegralEnvision/asv-ctd-qc/actions/workflows/ci.yml/badge.svg)](https://github.com/IntegralEnvision/asv-ctd-qc/actions/workflows/ci.yml)
 
-Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD](https://ioos.noaa.gov/project/qartod/) recommended testing implemented by [ioos_qc](https://github.com/ioos/ioos_qc).
-
-## To-Do
-
-- [x] Pull latest for [ioos_qc](https://github.com/ioos/ioos_qc)
-- [x] Comply with [CF Conventions](http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html)
-  - [x] [Standard names (with search)](https://cfconventions.org/Data/cf-standard-names/76/build/cf-standard-name-table.html)
-  - [x] [Standard names](http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml)
-- [x] Fine tune [config.json](./config.json)
-- [ ] Validate [config.json](./config.json) - either on a per-run basis or on update.
-- [ ] Testing
+Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD](https://ioos.noaa.gov/project/qartod/) recommended testing implemented by [ioos_qc](https://github.com/ioos/ioos_qc) :white_check_mark:.
 
 ## Setup
 
@@ -24,7 +14,7 @@ Using [Python](https://www.python.org/downloads/release/python-3100/) version 3.
   pip install -r requirements.txt  # Install dependencies
   ```
 
-  > [ioos_qc](https://github.com/ioos/ioos_qc) was cloned to the current repository on version 2.0.1 and modified for project requirements. See the [notes](#notes) section for specifics.
+  > [ioos_qc](https://github.com/ioos/ioos_qc) was cloned to the current repository on version 2.1.0 and modified for project requirements. See the [notes](#notes) section for specifics.
 
 ## Configure QC Test Parameters
 
@@ -32,9 +22,6 @@ IOOS QC test configurations are defined in [config.json](config.json). Below is 
 
 ```json
 "pressure": {              // Standard CF-safe parameter name
-  // "argo": {                         // Tests based on the ARGO QC manual
-  //   "pressure_increasing_test": null    // Check if pressure does not monotonically increase
-  // },
   "axds": {                         // Tests based on the IOOS QC manual
     "valid_range_test": {               // Checks that values are within a min/max range. This is not unlike a `qartod.gross_range_test` with fail and suspect bounds being equal, except that here we specify the inclusive range that should pass instead of the exclusive bounds which should fail
       "valid_span": [-5, 35]                // Values outside the range will FAIL
@@ -73,8 +60,6 @@ IOOS QC test configurations are defined in [config.json](config.json). Below is 
     //   "fail_threshold": 5                   // A float value representing a maximum potential density(or sigma0) variation to be tolerated, downward density variation exceeding this will be flagged as FAIL.
     // },
     "climatology_test": {               // Checks that values are within reasonable range bounds and flags as SUSPECT.
-      "suspect_span": [20, 35],               // (optional) 2-tuple range of valid values. This is passed in as the suspect_span to the gross_range_test.
-      "fail_span": [-5, 35],                  // 2-tuple range of valid values. This is passed in as the fail_span to the gross_range test.
       "zspan": [0, 100]                       // zspan: (optional) Vertical (depth) range, in meters positive down
     }
   }
@@ -83,8 +68,10 @@ IOOS QC test configurations are defined in [config.json](config.json). Below is 
 
 ## Run QC Checks
 
+See usage notes using the `--help` flag in [asv-ctd-qc.py](./asv-ctd-qc.py).
+
   ```sh
-usage: asv_ctd_qa.py [-h] [-l [LOG]] [-p] [-v] [-c] config input_file output_dir
+usage: asv-ctd-qc.py [-h] [-l [LOG]] [-p] [-v] [-c] config input_file output_dir
 
 Evaulate a data file of ASV CTD readings and apply quality assurence checks following QARTOD methods and
 assigning data quality flags as appropriate. Transform results into NetCDF format following IC standards.
@@ -106,12 +93,19 @@ options:
 ### Example QC Run
 
 ```sh
-docker run -it --rm -v "$(pwd)":/usr/local/app $(docker build -q -t asv-ctd .) python asv_ctd_qa.py -p -c -v config.json ./data/received/2022-10-07T19-45-27.0.txt ./data/processed
+docker run -it --rm -v "$(pwd)":/usr/local/app $(docker build -q -t asv-ctd .) python asv-ctd-qc.py -l ./logs/logfile.log -p -c -v config.json ./data/received/2022-10-07T19-45-27.0.txt ./data/processed
 ```
+
+Output from the above example will produce the following files:
+
+- NetCDF file of sensor data appended with QC flags.
+- A compliance check file indicating if any corrective actions are needed for CF compliance.
+- PNG files of every variable plotted against each QC check results. PNG files are compiled into a single HTML document for ease of viewing.
+- A log file containing script procedures. The same procedures are output to the console using `verbose` mode.
 
 ## Plotting QC Flags
 
-Visualize observations and QC flags together using [`qc_plots.py`](./utils/qc_plots.py). It is also built in to [`asv_ctd_qa.py`](./asv_ctd_qa.py) as an optional argument.
+Visualize observations and QC flags together using [qc_plots.py](./utils/qc_plots.py). It is also built in to [asv-ctd-qc.py](./asv-ctd-qc.py) as an optional argument.
 
 ```sh
 usage: qc_plots.py [-h] [-v] ncfile outdir
@@ -129,13 +123,13 @@ options:
 
 ## Dumping NetCDF Contents
 
-The `netcdf` package shows details of file contents, which can be downloaded using the `homebrew` or `apt` package managers. Likewise, use the [ncdump.py](./utils/ncdump.py) utility with Python. [ncdump.py](./utils/ncdump.py) is built in to [`asv_ctd_qa.py`](./asv_ctd_qa.py) as an optional argument.
+The `netcdf` package shows details of file contents, which can be downloaded using the `homebrew` or `apt` package managers. Likewise, use the [ncdump.py](./utils/ncdump.py) utility with Python. [ncdump.py](./utils/ncdump.py) is built in to [asv-ctd-qc.py](./asv-ctd-qc.py) as an optional argument.
 
 ## CF Compliance Checks
 
 > The [IOOS Compliance Checker](https://github.com/ioos/compliance-checker) is a python based tool for data providers to check for completeness and community standard compliance of local or remote netCDF files against CF and ACDD file standards. The python module can be used as a command-line tool or as a library that can be integrated into other software.
 
-Compliance checks can be run using the command line utility, or using Python via [`compliance.py`](./utils/compliance.py). Compliance checks are also built in to [`asv_ctd_qa.py`](./asv_ctd_qa.py) as an optional argument.
+Compliance checks can be run using the command line utility, or using Python via [compliance.py](./utils/compliance.py). Compliance checks are also built in to [asv-ctd-qc.py](./asv-ctd-qc.py) as an optional argument.
 
 ## Notes
 
