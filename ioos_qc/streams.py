@@ -7,7 +7,11 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 import xarray as xr
-from xarray.core.indexing import remap_label_indexers
+
+try:
+    from xarray.core.indexing import remap_label_indexers as map_index_queries
+except ImportError:
+    from xarray.core.indexing import map_index_queries
 
 from ioos_qc.config import Config
 from ioos_qc.results import ContextResult
@@ -18,33 +22,26 @@ L = logging.getLogger(__name__)  # noqa
 
 class BaseStream:
     """Each stream should define how to return a list of datastreams along with their time and depth association.
-
     Each of these streams will passed through quality control configurations and returned back to it. Each stream
-    needs to also define what to do with the resulting results (how to store them.)
-    """
+    needs to also define what to do with the resulting results (how to store them.)"""
 
     def __init__(self, *args, **kwargs):
-        """Df: the dataframe."""
+        """
+        df: the dataframe
+        """
         pass
 
     def time(self):
-        """Return the time array from the source dataset.
-
-        This is useful when plotting QC results.
-        """
+        """Return the time array from the source dataset. This is useful when plotting QC results."""
         pass
 
     def data(self, stream_id):
-        """Return the data array from the source dataset based on stream_id.
-
-        This is useful when
-        plotting QC results.
-        """
+        """Return the data array from the source dataset based on stream_id. This is useful when
+        plotting QC results."""
         pass
 
     def run(self, config: Config):
-        """Iterate over the configs, splitting the streams up by geographic and time window.
-
+        """Iterate over the configs, splitting the streams up by geographic and time window
         before applying the individual config using QcConfig.run(). Store results for future usage.
         """
         pass
@@ -53,8 +50,7 @@ class BaseStream:
 class PandasStream:
     def __init__(self, df, time=None, z=None, lat=None, lon=None, geom=None):
         """
-        Df: the dataframe.
-
+        df: the dataframe
         time: the column to use for time
         z: the column to use for depth
         lat: the column to use for latitude, this or geom is required if using regional subsets
@@ -92,7 +88,7 @@ class PandasStream:
             for call in calls:
                 if call.stream_id not in self.df:
                     L.warning(
-                        f"{call.stream_id} is not a column in the dataframe, skipping",
+                        f"{call.stream_id} is not a column in the dataframe, skipping"
                     )
                     continue
                 stream_ids.append(call.stream_id)
@@ -112,17 +108,15 @@ class PandasStream:
                 if self.time_column in self.axis_columns:
                     if context.window.starting:
                         subset = subset.loc[
-                            subset[self.time_column] >= context.window.starting,
-                            :,
+                            subset[self.time_column] >= context.window.starting, :
                         ]
                     if context.window.ending:
                         subset = subset.loc[
-                            subset[self.time_column] < context.window.ending,
-                            :,
+                            subset[self.time_column] < context.window.ending, :
                         ]
                 else:
                     L.warning(
-                        f"Skipping window subset, {self.time_column} not in columns",
+                        f"Skipping window subset, {self.time_column} not in columns"
                     )
                     pass
 
@@ -152,7 +146,7 @@ class PandasStream:
 
                 if call.stream_id not in subset:
                     L.warning(
-                        f"{call.stream_id} not a column in the input dataframe, skipping",
+                        f"{call.stream_id} not a column in the input dataframe, skipping"
                     )
                     continue
 
@@ -167,8 +161,7 @@ class PandasStream:
                     subset_indexes=subset_indexes.values,
                     data=data_input.values,
                     tinp=subset_kwargs.get(
-                        "tinp",
-                        pd.Series(dtype="datetime64[ns]"),
+                        "tinp", pd.Series(dtype="datetime64[ns]")
                     ).values,
                     zinp=subset_kwargs.get("zinp", pd.Series(dtype="float64")).values,
                     lat=subset_kwargs.get("lat", pd.Series(dtype="float64")).values,
@@ -179,8 +172,7 @@ class PandasStream:
 class NumpyStream:
     def __init__(self, inp=None, time=None, z=None, lat=None, lon=None, geom=None):
         """
-        Inp: a numpy array or a dictionary of numpy arrays where the keys are the stream ids.
-
+        inp: a numpy array or a dictionary of numpy arrays where the keys are the stream ids
         time: numpy array of date-like objects.
         z: numpy array of z
         lat: numpy array of latitude, this or geom is required if using regional subsets
@@ -219,7 +211,7 @@ class NumpyStream:
                     pass
                 else:
                     L.warning(
-                        'Skipping region subset, "lat" and "lon" must be passed into NumpySource',
+                        'Skipping region subset, "lat" and "lon" must be passed into NumpySource'
                     )
 
             if context.window.starting is not None or context.window.ending is not None:
@@ -234,7 +226,7 @@ class NumpyStream:
                         )
                 else:
                     L.warning(
-                        'Skipping window subset, "time" array must be passed into "run"',
+                        'Skipping window subset, "time" array must be passed into "run"'
                     )
                     pass
 
@@ -269,7 +261,7 @@ class NumpyStream:
                         continue
                 else:
                     L.error(
-                        f"Input is not a dict or np.ndarray, skipping {call.stream_id}",
+                        f"Input is not a dict or np.ndarray, skipping {call.stream_id}"
                     )
                     continue
 
@@ -288,8 +280,7 @@ class NumpyStream:
                     subset_indexes=subset_indexes,
                     data=data_input,
                     tinp=subset_kwargs.get(
-                        "tinp",
-                        pd.Series(dtype="datetime64[ns]"),
+                        "tinp", pd.Series(dtype="datetime64[ns]")
                     ).values,
                     zinp=subset_kwargs.get("zinp", pd.Series(dtype="float64").values),
                     lat=subset_kwargs.get("lat", pd.Series(dtype="float64").values),
@@ -339,7 +330,7 @@ class NetcdfStream:
             for call in calls:
                 if call.stream_id not in ds.variables:
                     L.warning(
-                        f"{call.stream_id} is not a variable in the netCDF dataset, skipping",
+                        f"{call.stream_id} is not a variable in the netCDF dataset, skipping"
                     )
                     continue
                 stream_ids.append(call.stream_id)
@@ -348,7 +339,7 @@ class NetcdfStream:
         varkwargs = {"inp": {}}
         if self.time_var in ds.variables:
             varkwargs["time"] = pd.DatetimeIndex(
-                mapdates(ds.variables[self.time_var].values),
+                mapdates(ds.variables[self.time_var].values)
             )
         if self.z_var in ds.variables:
             varkwargs["z"] = ds.variables[self.z_var].values
@@ -423,7 +414,7 @@ class XarrayStream:
                 # Find any var specific kwargs to pass onto the run
                 if call.stream_id not in ds.variables:
                     L.warning(
-                        f"{call.stream_id} is not a variable in the xarray dataset, skipping",
+                        f"{call.stream_id} is not a variable in the xarray dataset, skipping"
                     )
                     continue
 
@@ -445,8 +436,7 @@ class XarrayStream:
                 if self.time_var in ds[call.stream_id].coords:
                     if context.window.starting and context.window.ending:
                         label_indexes[self.time_var] = slice(
-                            context.window.starting,
-                            context.window.ending,
+                            context.window.starting, context.window.ending
                         )
 
                 subset_stream = ds[call.stream_id].sel(**label_indexes)
@@ -530,7 +520,13 @@ class XarrayStream:
                 # data[subset_indexes]. I'm pretty sure this works and if it doesn't blame my cat.
                 # We start by subsetting nothing
                 subset_indexes = np.full_like(ds[call.stream_id].values, 0, dtype=bool)
-                int_indexes, _ = remap_label_indexers(ds[call.stream_id], label_indexes)
+                int_indexes = map_index_queries(ds[call.stream_id], label_indexes)
+                # This if-else clause is required only to support Python <3.8.
+                # we can remove it when ioos_qc drops support for Python <=3.7.
+                if isinstance(int_indexes, tuple):
+                    int_indexes = int_indexes[0]
+                else:
+                    int_indexes = int_indexes.dim_indexers
                 # Initial slicer will select everything. This selects all values in a dimension
                 # if there are no labeled indexes for it.
                 slicers = [slice(None) for x in range(ds[call.stream_id].ndim)]
@@ -553,8 +549,7 @@ class XarrayStream:
                     subset_indexes=subset_indexes,
                     data=data_input,
                     tinp=subset_kwargs.get(
-                        "tinp",
-                        pd.Series(dtype="datetime64[ns]").values,
+                        "tinp", pd.Series(dtype="datetime64[ns]").values
                     ),
                     zinp=subset_kwargs.get("zinp", pd.Series(dtype="float64").values),
                     lat=subset_kwargs.get("lat", pd.Series(dtype="float64").values),

@@ -34,6 +34,11 @@ class QartodFlags(object):
 FLAGS = QartodFlags  # Default name for all check modules
 NOTEVAL_VALUE = QartodFlags.UNKNOWN
 
+WEEK_PERIODS = [
+    "week",
+    "weekofyear",
+]
+
 span = namedtuple("Span", "minv maxv")
 
 
@@ -332,7 +337,11 @@ class ClimatologyConfig(object):
                 # If a period is defined, extract the attribute from the
                 # pd.DatetimeIndex object before comparison. The min and max
                 # values are in this period unit already.
-                tinp_copy = getattr(tinp, m.period).to_series()
+                if m.period in WEEK_PERIODS:
+                    # The weekofyear accessor was depreacated
+                    tinp_copy = pd.Index(tinp.isocalendar().week, dtype="int64")
+                else:
+                    tinp_copy = getattr(tinp, m.period).to_series()
             else:
                 # If a period isn't defined, make a new Timestamp object
                 # to align with the above name 'tinp_copy'
@@ -466,12 +475,13 @@ def spike_test(
         suspect_threshold: The SUSPECT threshold value, in observations units.
         fail_threshold: The SUSPECT threshold value, in observations units.
         method: ['average'(default),'differential'] optional input to assign the method used to detect spikes.
-            "average": Determine if there is a spike at data point n-1 by subtracting
-                the midpoint of n and n-2 and taking the absolute value of this
-                quantity, and checking if it exceeds a low or high threshold.
-            "differential": Determine if there is a spike at data point n by calculating the difference
-                between n and n-1 and n+1 and n variation. To considered, (n - n-1)*(n+1 - n) should
-                be smaller than zero (in opposite direction).
+            * "average": Determine if there is a spike at data point n-1 by subtracting
+            the midpoint of n and n-2 and taking the absolute value of this
+            quantity, and checking if it exceeds a low or high threshold.
+            -
+            * "differential": Determine if there is a spike at data point n by calculating the difference
+            between n and n-1 and n+1 and n variation. To considered, (n - n-1)*(n+1 - n) should
+            be smaller than zero (in opposite direction).
 
     Returns:
         A masked array of flag values equal in size to that of the input.
@@ -642,10 +652,9 @@ def flat_line_test(
 
     # The thresholds are in seconds so we round make sure the interval is also in seconds
     time_interval = np.median(np.diff(tinp)).astype("timedelta64[s]").astype(float)
-
     # Time intervals can be < 1 second
     if time_interval == 0:
-        time_interval = np.float64(1)
+        time_interval = np.float64(1.0)
 
     def rolling_window(a, window):
         """
