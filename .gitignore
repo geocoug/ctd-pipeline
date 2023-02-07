@@ -1,6 +1,10 @@
+~$*
 docs/
 examples/
 .venv/
+.env
+.bash_history
 *cache*
 *logs*
-data/processed/
+data/
+examples/

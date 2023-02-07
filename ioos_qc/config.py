@@ -131,7 +131,18 @@ class Call:
             ret += f' ending={self.window.ending}'
         if self.context.region is not None:
             ret += ' region=True'
-        ret += f' {self.module}.{self.method}({self.args}, {self.kwargs})>'
+
+        ret += f' function={self.module}.{self.method}('
+
+        if self.args:
+            ret += ', '.join([ x for x in self.args if x ])
+
+        if self.kwargs:
+            ret += ', '.join([
+                f'{k}={v}' for k, v in self.kwargs.items()
+            ])
+
+        ret += ')>'
         return ret
 
     def run(self, **passedkwargs):
@@ -213,7 +224,7 @@ class Config:
     so things like subsetting by time and space only happen once for each test in the same Context.
 
     How the individual checks are collected is up to each individual Stream implementation, this
-    class only pares various formats and versions of a config into a list of Call objects.
+    class only pairs various formats and versions of a config into a list of Call objects.
     """
 
     def __init__(self, source, version=None, default_stream_key='_stream'):
@@ -347,20 +358,22 @@ class ContextConfig:
     Defines a set of quality checks to run against multiple input streams.
     This can include a region and a time window to subset any DataStreams by before running checks.
 
-    region: None
-    window:
-        starting: 2020-01-01T00:00:00Z
-        ending: 2020-04-01T00:00:00Z
-    streams:
-        variable1:    # stream_id
-            qartod:   # StreamConfig
-                location_test:
-                    bbox: [-80, 40, -70, 60]
-        variable2:    # stream_id
-            qartod:   # StreamConfig
-                gross_range_test:
-                    suspect_span: [1, 11]
-                    fail_span: [0, 12]
+    ..  code-block:: yaml
+
+        region: None
+        window:
+            starting: 2020-01-01T00:00:00Z
+            ending: 2020-04-01T00:00:00Z
+        streams:
+            variable1:    # stream_id
+                qartod:   # StreamConfig
+                    location_test:
+                        bbox: [-80, 40, -70, 60]
+            variable2:    # stream_id
+                qartod:   # StreamConfig
+                    gross_range_test:
+                        suspect_span: [1, 11]
+                        fail_span: [0, 12]
 
     Helper methods exist to run this check against a different inputs:
         * pandas.DataFrame, dask.DataFrame, netCDF4.Dataset, xarray.Dataset, ERDDAP URL

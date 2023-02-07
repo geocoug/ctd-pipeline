@@ -6,11 +6,11 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
 
 ## To-Do
 
-- [ ] Pull latest for [ioos_qc](https://github.com/ioos/ioos_qc)
-- [ ] Comply with [CF Conventions](http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html)
-  - [ ] [Standard names (with search)](https://cfconventions.org/Data/cf-standard-names/76/build/cf-standard-name-table.html)
-  - [ ] [Standard names](http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml)
-- [ ] Fine tune [config.json](./config.json)
+- [x] Pull latest for [ioos_qc](https://github.com/ioos/ioos_qc)
+- [x] Comply with [CF Conventions](http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html)
+  - [x] [Standard names (with search)](https://cfconventions.org/Data/cf-standard-names/76/build/cf-standard-name-table.html)
+  - [x] [Standard names](http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml)
+- [x] Fine tune [config.json](./config.json)
 - [ ] Validate [config.json](./config.json) - either on a per-run basis or on update.
 - [ ] Testing
 
@@ -26,24 +26,15 @@ Using [Python](https://www.python.org/downloads/release/python-3100/) version 3.
 
   > [ioos_qc](https://github.com/ioos/ioos_qc) was cloned to the current repository on version 2.0.1 and modified for project requirements. See the [notes](#notes) section for specifics.
 
-- As of **2022-06-20** a few extra steps are needed to use the Python NetCDF4 module on Apple Silicon (M1, M2).
-
-    ```sh
-    brew install hdf5 netcdf
-    git clone https://github.com/Unidata/netcdf4-python.git
-    HDF5_DIR=$(brew --prefix hdf5) pip install --no-cache-dir ./netcdf4-python
-    rm -r ./netcdf4-python
-    ```
-
 ## Configure QC Test Parameters
 
 IOOS QC test configurations are defined in [config.json](config.json). Below is an example QC configuration for the parameter `pressure`. Keys directly correlate to QC functions and arguments in the [ioos_qc](https://github.com/ioos/ioos_qc) library.
 
 ```json
 "pressure": {              // Standard CF-safe parameter name
-  "argo": {                         // Tests based on the ARGO QC manual
-    "pressure_increasing_test": null    // Check if pressure does not monotonically increase
-  },
+  // "argo": {                         // Tests based on the ARGO QC manual
+  //   "pressure_increasing_test": null    // Check if pressure does not monotonically increase
+  // },
   "axds": {                         // Tests based on the IOOS QC manual
     "valid_range_test": {               // Checks that values are within a min/max range. This is not unlike a `qartod.gross_range_test` with fail and suspect bounds being equal, except that here we specify the inclusive range that should pass instead of the exclusive bounds which should fail
       "valid_span": [-5, 35]                // Values outside the range will FAIL
@@ -69,22 +60,22 @@ IOOS QC test configurations are defined in [config.json](config.json). Below is 
                                                 // "average": Determine if there is a spike at data point n-1 by subtracting the midpoint of n and n-2 and taking the absolute value of this quantity, and checking if it exceeds a low or high threshold.
                                                 // "differential": Determine if there is a spike at data point n by calculating the difference between n and n-1 and n+1 and n variation. To considered, (n - n-1)*(n+1 - n) should be smaller than zero (in opposite direction).
     },
-    "attenuated_signal_test": {         // Check for near-flat-line conditions using a range or standard deviation.
-      "suspect_threshold": 5,               // Any calculated value below this amount will be flagged as SUSPECT. In observations units.
-      "fail_threshold": 3,                  // Any calculated values below this amount will be flagged as FAIL. In observations units.
-      "test_period": 15,                    // Length of time to test over in seconds [optional]. Otherwise, will test against entire `inp`.
-      "min_obs": null,                      // Minimum number of observations in window required to calculate a result [optional]. Otherwise, test will start at beginning of time series. Note: you can specify either `min_obs` or `min_period`, but not both.
-      "min_period": null,                   // Minimum number of seconds in test_period required to calculate a result [optional]. Otherwise, test will start at beginning of time series. Note: you can specify either `min_obs` or `min_period`, but not both.
-      "check_type": "range"                 // Either 'std' (default) or 'range', depending on the type of check you wish to perform.
-    },
-    "density_inversion_test": {         // With few exceptions, potential water density will increase with increasing pressure. When vertical profile data is obtained, this test is used to flag as failed T, C, and SP observations, which yield densities that do not sufficiently increase with pressure. A small operator-selected density threshold (DT) allows for micro-turbulent exceptions.
-      "suspect_threshold": 3,               // A float value representing a maximum potential density(or sigma0) variation to be tolerated, downward density variation exceeding this will be flagged as SUSPECT.
-      "fail_threshold": 5                   // A float value representing a maximum potential density(or sigma0) variation to be tolerated, downward density variation exceeding this will be flagged as FAIL.
-    },
+    // "attenuated_signal_test": {         // Check for near-flat-line conditions using a range or standard deviation.
+    //   "suspect_threshold": 5,               // Any calculated value below this amount will be flagged as SUSPECT. In observations units.
+    //   "fail_threshold": 3,                  // Any calculated values below this amount will be flagged as FAIL. In observations units.
+    //   "test_period": 15,                    // Length of time to test over in seconds [optional]. Otherwise, will test against entire `inp`.
+    //   "min_obs": null,                      // Minimum number of observations in window required to calculate a result [optional]. Otherwise, test will start at beginning of time series. Note: you can specify either `min_obs` or `min_period`, but not both.
+    //   "min_period": null,                   // Minimum number of seconds in test_period required to calculate a result [optional]. Otherwise, test will start at beginning of time series. Note: you can specify either `min_obs` or `min_period`, but not both.
+    //   "check_type": "range"                 // Either 'std' (default) or 'range', depending on the type of check you wish to perform.
+    // },
+    // "density_inversion_test": {         // With few exceptions, potential water density will increase with increasing pressure. When vertical profile data is obtained, this test is used to flag as failed T, C, and SP observations, which yield densities that do not sufficiently increase with pressure. A small operator-selected density threshold (DT) allows for micro-turbulent exceptions.
+    //   "suspect_threshold": 3,               // A float value representing a maximum potential density(or sigma0) variation to be tolerated, downward density variation exceeding this will be flagged as SUSPECT.
+    //   "fail_threshold": 5                   // A float value representing a maximum potential density(or sigma0) variation to be tolerated, downward density variation exceeding this will be flagged as FAIL.
+    // },
     "climatology_test": {               // Checks that values are within reasonable range bounds and flags as SUSPECT.
-      "suspect_span": [20, 35],              // (optional) 2-tuple range of valid values. This is passed in as the suspect_span to the gross_range_test.
+      "suspect_span": [20, 35],               // (optional) 2-tuple range of valid values. This is passed in as the suspect_span to the gross_range_test.
       "fail_span": [-5, 35],                  // 2-tuple range of valid values. This is passed in as the fail_span to the gross_range test.
-      "zspan": [0, 100]
+      "zspan": [0, 100]                       // zspan: (optional) Vertical (depth) range, in meters positive down
     }
   }
 }
@@ -114,14 +105,8 @@ options:
 
 ### Example QC Run
 
-  ```sh
-  python asv_ctd_qa.py -v config.json ./data/received/2021-09-30T15-40-11.0.txt ./data/processed
-  ```
-
-#### Docker
-
 ```sh
-docker run -it --rm -v "$(pwd)":/app $(docker build -t asv-ctd .) python asv_ctd_qa.py -v config.json ./data/received/2021-09-30T15-40-11.0.txt ./data/processed
+docker run -it --rm -v "$(pwd)":/usr/local/app $(docker build -q -t asv-ctd .) python asv_ctd_qa.py -p -c -v config.json ./data/received/2022-10-07T19-45-27.0.txt ./data/processed
 ```
 
 ## Plotting QC Flags
@@ -142,8 +127,6 @@ options:
   -v, --verbose  Control the amount of information to display.
 ```
 
-[See example output here.](./data/processed/plots/2021-09-30T15-40-11.0.txt.nc)
-
 ## Dumping NetCDF Contents
 
 The `netcdf` package shows details of file contents, which can be downloaded using the `homebrew` or `apt` package managers. Likewise, use the [ncdump.py](./utils/ncdump.py) utility with Python. [ncdump.py](./utils/ncdump.py) is built in to [`asv_ctd_qa.py`](./asv_ctd_qa.py) as an optional argument.
@@ -158,7 +141,7 @@ Compliance checks can be run using the command line utility, or using Python via
 
 ### ioos_qc
 
-- [ioos_qc](https://github.com/ioos/ioos_qc) was cloned to the current repository on version 2.0.1 and modified for project requirements. The following revisions were made:
+- [ioos_qc](https://github.com/ioos/ioos_qc) was cloned to the current repository on version 2.1.0 and modified for project requirements. The following revisions were made:
 
 #### qartod.py
 
@@ -166,7 +149,7 @@ Compliance checks can be run using the command line utility, or using Python via
 
 #### streams.py
 
-1. Updated `self.lat_column` from `lat` to `longitude` and `self.lon_column` from `lon` to `longitude` in [`PandasStream().__init__()`](https://github.com/ioos/ioos_qc/blob/093935e0f2c21a6a585bda5a194fc7a2c7aedd76/ioos_qc/streams.py#L49)
+1. Updated `self.lat_column` from `lat` to `latitude` and `self.lon_column` from `lon` to `longitude` in [`PandasStream().__init__()`](https://github.com/ioos/ioos_qc/blob/093935e0f2c21a6a585bda5a194fc7a2c7aedd76/ioos_qc/streams.py#L49)
 
 ### Souce Data String Configuration (tab delimited)
 
