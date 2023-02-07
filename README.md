@@ -1,4 +1,4 @@
-# asv-ctd-qa
+# asv-ctd-qc
 
 [![ci](https://github.com/IntegralEnvision/asv-ctd-qc/actions/workflows/ci.yml/badge.svg)](https://github.com/IntegralEnvision/asv-ctd-qc/actions/workflows/ci.yml)
 
@@ -139,7 +139,7 @@ Compliance checks can be run using the command line utility, or using Python via
 
 #### qartod.py
 
-1. [time_interval](https://github.com/IntegralEnvision/asv-ctd-qa/commit/a249dd4ee84f719696fb31ecd6eabd9edd0f6a33#diff-32c09032f00f303300ace35369debee33af51ceb355defcce878c489bdc3af6aR646) calculation. CTD collection times can be < 1 second apart causing the number of observations to appear as 0.
+1. [time_interval](https://github.com/IntegralEnvision/asv-ctd-qc/commit/a249dd4ee84f719696fb31ecd6eabd9edd0f6a33#diff-32c09032f00f303300ace35369debee33af51ceb355defcce878c489bdc3af6aR646) calculation. CTD collection times can be < 1 second apart causing the number of observations to appear as 0.
 
 #### streams.py
 
