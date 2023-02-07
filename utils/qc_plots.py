@@ -172,19 +172,18 @@ def generate_plots(ncfile: str, outdir: str) -> None:
                         <h1>Plots for {base_ncfile}</h1>
                         <hr>
                         <div class="row justify-content-center">
-                            <div class="col-sm-3 p-3 mt-3">
+                            <div class="col-md-3 p-3 mt-3">
                                 <nav id="toc" data-toggle="toc" class="sticky-top">
                                 </nav>
                             </div>
-                        <div class="col-sm-9">
+                        <div class="col-md-9">
         """,
         )
         for var in variables:
             logger.info(f"  {var}")
-            f.write(f"""<h3>{var}</h3>""")
+            f.write(f"""<h2 class="text-primary">{var}</h2>""")
             for qc in variables[var]:
-                # logger.info(f"    {qc}")
-                f.write(f"""<div class="row"><h4>{qc}</h4>""")
+                f.write(f"""<div class="row"><h3>{qc}</h3>""")
                 plot_results(
                     data,
                     var,
