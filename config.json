@@ -2,13 +2,14 @@
     "attributes": {
         "title": "Hypoxia Monitoring",
         "description": "ASV hypoxia monitoring CTD data and QARTOD flags",
+        "institution": "C-Worker 5",
         "vehicle": "C-Worker 5",
         "source": "L3 Harris",
         "PI": "Steven Howden",
         "author": "Integral Consulting Inc",
         "Conventions": "CF-1.6",
         "history": "Created on",
-        "qartod": "https://github.com/ioos/ioos_qc"
+        "references": "https://github.com/ioos/ioos_qc"
     },
     "parameters": {
         "TEMPERATURE;C": {
@@ -85,7 +86,7 @@
             "standard_name": "time",
             "long_name": "Time",
             "dtype": "datetime64[s]",
-            "units": "seconds since 1970-01-01 00:00:00",
+            "units": "seconds since 1970-01-01T00:00:00Z",
             "calendar": "standard"
         },
         "LATITUDE;DEG": {
@@ -187,7 +188,7 @@
                         "fail_threshold": 900
                     },
                     "rate_of_change_test": {
-                        "threshold": 5
+                        "threshold": 3
                     },
                     "spike_test": {
                         "suspect_threshold": 1,
@@ -206,7 +207,7 @@
                 "axds": {
                     "valid_range_test": {
                         "valid_span": [
-                            0.1,
+                            0,
                             80
                         ]
                     }
@@ -228,7 +229,7 @@
                         "fail_threshold": 900
                     },
                     "rate_of_change_test": {
-                        "threshold": 5
+                        "threshold": 2
                     },
                     "spike_test": {
                         "suspect_threshold": 2,
@@ -247,8 +248,8 @@
                 "axds": {
                     "valid_range_test": {
                         "valid_span": [
-                            -5,
-                            35
+                            0,
+                            40
                         ]
                     }
                 },
@@ -259,8 +260,8 @@
                             35
                         ],
                         "fail_span": [
-                            -5,
-                            35
+                            0,
+                            40
                         ]
                     },
                     "flat_line_test": {
@@ -269,17 +270,17 @@
                         "fail_threshold": 900
                     },
                     "rate_of_change_test": {
-                        "threshold": 5
+                        "threshold": 2
                     },
                     "spike_test": {
-                        "suspect_threshold": 0.01,
-                        "fail_threshold": 0.02,
+                        "suspect_threshold": 3,
+                        "fail_threshold": 5,
                         "method": "average"
                     },
                     "climatology_test": {
                         "zspan": [
                             0,
-                            100
+                            1000
                         ]
                     }
                 }
@@ -288,20 +289,20 @@
                 "axds": {
                     "valid_range_test": {
                         "valid_span": [
-                            -5,
-                            35
+                            1,
+                            13
                         ]
                     }
                 },
                 "qartod": {
                     "gross_range_test": {
                         "suspect_span": [
-                            20,
-                            35
+                            5,
+                            9
                         ],
                         "fail_span": [
-                            -5,
-                            35
+                            3,
+                            11
                         ]
                     },
                     "flat_line_test": {
@@ -310,25 +311,17 @@
                         "fail_threshold": 900
                     },
                     "rate_of_change_test": {
-                        "threshold": 5
+                        "threshold": 0.5
                     },
                     "spike_test": {
                         "suspect_threshold": 0.01,
-                        "fail_threshold": 0.02,
+                        "fail_threshold": 0.03,
                         "method": "average"
                     },
                     "climatology_test": {
-                        "suspect_span": [
-                            -2,
-                            3
-                        ],
-                        "fail_span": [
-                            3,
-                            20
-                        ],
                         "zspan": [
                             0,
-                            100
+                            1000
                         ]
                     }
                 }
@@ -337,20 +330,20 @@
                 "axds": {
                     "valid_range_test": {
                         "valid_span": [
-                            -5,
-                            35
+                            0,
+                            300
                         ]
                     }
                 },
                 "qartod": {
                     "gross_range_test": {
                         "suspect_span": [
-                            20,
-                            35
+                            50,
+                            200
                         ],
                         "fail_span": [
-                            -5,
-                            35
+                            0,
+                            300
                         ]
                     },
                     "flat_line_test": {
@@ -359,25 +352,17 @@
                         "fail_threshold": 900
                     },
                     "rate_of_change_test": {
-                        "threshold": 5
+                        "threshold": 2
                     },
                     "spike_test": {
-                        "suspect_threshold": 0.01,
-                        "fail_threshold": 0.02,
+                        "suspect_threshold": 1,
+                        "fail_threshold": 2,
                         "method": "average"
                     },
                     "climatology_test": {
-                        "suspect_span": [
-                            -2,
-                            3
-                        ],
-                        "fail_span": [
-                            3,
-                            20
-                        ],
                         "zspan": [
                             0,
-                            100
+                            1000
                         ]
                     }
                 }
@@ -386,20 +371,20 @@
                 "axds": {
                     "valid_range_test": {
                         "valid_span": [
-                            -5,
-                            35
+                            0,
+                            100
                         ]
                     }
                 },
                 "qartod": {
                     "gross_range_test": {
                         "suspect_span": [
-                            20,
-                            35
+                            0,
+                            20
                         ],
                         "fail_span": [
-                            -5,
-                            35
+                            0,
+                            100
                         ]
                     },
                     "flat_line_test": {
@@ -408,25 +393,17 @@
                         "fail_threshold": 900
                     },
                     "rate_of_change_test": {
-                        "threshold": 5
+                        "threshold": 2
                     },
                     "spike_test": {
-                        "suspect_threshold": 0.01,
-                        "fail_threshold": 0.02,
+                        "suspect_threshold": 1,
+                        "fail_threshold": 2,
                         "method": "average"
                     },
                     "climatology_test": {
-                        "suspect_span": [
-                            -2,
-                            3
-                        ],
-                        "fail_span": [
-                            3,
-                            20
-                        ],
                         "zspan": [
                             0,
-                            100
+                            1000
                         ]
                     }
                 }
@@ -435,24 +412,24 @@
                 "axds": {
                     "valid_range_test": {
                         "valid_span": [
-                            -5,
-                            35
+                            0,
+                            2000
                         ]
                     }
                 },
                 "qartod": {
                     "gross_range_test": {
                         "suspect_span": [
-                            20,
-                            35
+                            0,
+                            500
                         ],
                         "fail_span": [
-                            -5,
-                            35
+                            0,
+                            2000
                         ]
                     },
                     "flat_line_test": {
-                        "tolerance": 0.01,
+                        "tolerance": 1,
                         "suspect_threshold": 300,
                         "fail_threshold": 900
                     },
@@ -460,22 +437,14 @@
                         "threshold": 5
                     },
                     "spike_test": {
-                        "suspect_threshold": 0.01,
-                        "fail_threshold": 0.02,
+                        "suspect_threshold": 10,
+                        "fail_threshold": 20,
                         "method": "average"
                     },
                     "climatology_test": {
-                        "suspect_span": [
-                            -2,
-                            3
-                        ],
-                        "fail_span": [
-                            3,
-                            20
-                        ],
                         "zspan": [
                             0,
-                            100
+                            1000
                         ]
                     }
                 }
@@ -484,20 +453,20 @@
                 "axds": {
                     "valid_range_test": {
                         "valid_span": [
-                            -5,
-                            35
+                            0,
+                            100
                         ]
                     }
                 },
                 "qartod": {
                     "gross_range_test": {
                         "suspect_span": [
-                            20,
-                            35
+                            0,
+                            10
                         ],
                         "fail_span": [
-                            -5,
-                            35
+                            0,
+                            100
                         ]
                     },
                     "flat_line_test": {
@@ -509,22 +478,14 @@
                         "threshold": 5
                     },
                     "spike_test": {
-                        "suspect_threshold": 0.01,
-                        "fail_threshold": 0.02,
+                        "suspect_threshold": 2.5,
+                        "fail_threshold": 5,
                         "method": "average"
                     },
                     "climatology_test": {
-                        "suspect_span": [
-                            -2,
-                            3
-                        ],
-                        "fail_span": [
-                            3,
-                            20
-                        ],
                         "zspan": [
                             0,
-                            100
+                            1000
                         ]
                     }
                 }
@@ -533,20 +494,20 @@
                 "axds": {
                     "valid_range_test": {
                         "valid_span": [
-                            -5,
-                            35
+                            0,
+                            1000
                         ]
                     }
                 },
                 "qartod": {
                     "gross_range_test": {
                         "suspect_span": [
-                            20,
-                            35
+                            0,
+                            1000
                         ],
                         "fail_span": [
-                            -5,
-                            35
+                            0,
+                            1000
                         ]
                     },
                     "flat_line_test": {
@@ -555,25 +516,17 @@
                         "fail_threshold": 900
                     },
                     "rate_of_change_test": {
-                        "threshold": 5
+                        "threshold": 2
                     },
                     "spike_test": {
-                        "suspect_threshold": 0.01,
-                        "fail_threshold": 0.02,
+                        "suspect_threshold": 0.5,
+                        "fail_threshold": 1,
                         "method": "average"
                     },
                     "climatology_test": {
-                        "suspect_span": [
-                            -2,
-                            3
-                        ],
-                        "fail_span": [
-                            3,
-                            20
-                        ],
                         "zspan": [
                             0,
-                            100
+                            1000
                         ]
                     }
                 }
