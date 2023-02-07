@@ -145,17 +145,15 @@ class FileParser:
 
     def filestats(self: "FileParser") -> str:
         """Returns multi-line string of file information."""
-        fstats = """Filename: %s\n
-            File rows: %d\n
-            Header rows: %d\n
-            Column row: %d\n
-            Data rows: %d\n
-            """ % (
-            self.filename,
-            self.filerows,
-            self.header_rows,
-            self.datarows_start,
-            self.datarows,
+        fstats = (
+            """Filename: %s\nFile rows: %d\nHeader rows: %d\nColumn row: %d\nData rows: %d\n"""  # noqa
+            % (
+                self.filename,
+                self.filerows,
+                self.header_rows,
+                self.datarows_start,
+                self.datarows,
+            )
         )
         fstats += "Columns:\n"
         for idx, col in enumerate(self.cols):
@@ -378,6 +376,10 @@ class NetCDF:
         v.flag_values = np.array([1, 2, 3, 4, 9], dtype=np.int8)
         v.flag_meanings = "GOOD NOT_EVALUATED SUSPECT BAD MISSING"
         for attr in variables:
+            # if attr == "valid_range":
+            #     # logger.info(attr)
+            #     logger.info(variables[attr])
+            #     input()
             if attr == "tinp" or variables[attr] is None:
                 continue
             elif type(variables[attr]) == pd.Series:  # noqa RET507
@@ -569,7 +571,7 @@ def run_qc(
     for variable in ioos_qc_config["variables"]:
         variable_config = ioos_qc_config["variables"][variable]
         if "valid_range_test" in variable_config["axds"]:
-            variable_config["axds"]["valid_range_test"]["valid_range"] = tuple(
+            variable_config["axds"]["valid_range_test"]["valid_span"] = tuple(
                 np.array(variable_config["axds"]["valid_range_test"]["valid_span"]),
             )
         if "density_inversion_test" in variable_config["qartod"]:
@@ -718,7 +720,6 @@ def asv_ctd_qa(
     output_dir: str,
     plot: bool = False,
     verbose: bool = False,
-    log: str | None = None,
     compliance_check: bool = False,
 ) -> None:
     """Run IOOS QC tests.
@@ -767,7 +768,6 @@ def asv_ctd_qa(
             "verbose": verbose,
         },
     )
-    logger.info(LOGGER_SEPARATOR)
 
     # Load JSON configuration
     try:
@@ -776,6 +776,7 @@ def asv_ctd_qa(
     except OSError:
         raise
 
+    logger.info(LOGGER_SEPARATOR)
     # Evaulate input parameters and create Parameter object.
     logger.info("EVAULATING INPUT FILE")
     parameters = Parameters(
@@ -785,16 +786,16 @@ def asv_ctd_qa(
     )
     # Log parameter file details
     logger.info(parameters.filestats())
-    logger.info(LOGGER_SEPARATOR)
 
+    logger.info(LOGGER_SEPARATOR)
     # Create dataframe of input parameters
     # Dataframe will be used to append QARTOD flag columns
     parameters.parameter_dataframe()
-    logger.info(LOGGER_SEPARATOR)
 
     # Create directory to store output, if it doesnt exist already
     create_dir(output_dir)
 
+    logger.info(LOGGER_SEPARATOR)
     # Initialize NetCDF file and write parameter data
     ncfile = NetCDF(config_json, out_ncfile)
     for parameter in config_json["parameters"]:
@@ -809,17 +810,16 @@ def asv_ctd_qa(
         )
 
     # REMOVE THIS!!!!
-    parameters.df["time"] = parameters.df["time"] + pd.DateOffset(months=7)
+    # Purpose is to set collection date to something closer to now
+    # so climatology tests pass.
+    # parameters.df["time"] = parameters.df["time"] + pd.DateOffset(months=7)
 
+    logger.info(LOGGER_SEPARATOR)
     # Run IOOS_QC tests
     run_qc(config_json, parameters, ncfile)
 
     # Pretty print NetCDF file information, also store sections as variables
-    nc_attrs, nc_dims, nc_vars = ncdump.ncdump(
-        ncfile,
-        verb=bool(verbose),
-        log=log,
-    )
+    nc_attrs, nc_dims, nc_vars = ncdump.ncdump(ncfile)
 
     if compliance_check:
         logger.info(LOGGER_SEPARATOR)
@@ -852,7 +852,7 @@ def asv_ctd_qa(
     logger.info(LOGGER_SEPARATOR)
     log_variables(
         {
-            "done_at": "%s %s"
+            "Done at": "%s %s"
             % (
                 datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S %p"),
                 datetime.datetime.now().astimezone().tzinfo,
@@ -893,6 +893,5 @@ if __name__ == "__main__":
         output_dir,
         plot,
         verbose,
-        log,
         compliance_check,
     )
