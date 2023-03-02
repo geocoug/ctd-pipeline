@@ -682,11 +682,11 @@ def get_num_header_rows(input_file: str) -> int:
     is raised and indicates how many rows were searched while not
     finding an exact string match.
 
-    Args:
+    Args
     ----
-        - input_file (str): Input file to checck for header rows.
+        input_file (str): Input file to checck for header rows.
 
-    Returns:
+    Returns
     -------
         int: Number of header rows.
     """
@@ -714,7 +714,7 @@ def get_num_header_rows(input_file: str) -> int:
     return num_header_rows
 
 
-def asv_ctd_qa(
+def asv_ctd_qc(
     config_file: str,
     input_file: str,
     output_dir: str,
@@ -887,11 +887,11 @@ if __name__ == "__main__":
         fh.setFormatter(formatter)
         logger.addHandler(fh)
 
-    asv_ctd_qa(
-        config_file,
-        input_file,
-        output_dir,
-        plot,
-        verbose,
-        compliance_check,
+    asv_ctd_qc(
+        config_file=config_file,
+        input_file=input_file,
+        output_dir=output_dir,
+        plot=plot,
+        verbose=verbose,
+        compliance_check=compliance_check,
     )

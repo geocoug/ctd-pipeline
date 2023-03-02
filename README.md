@@ -68,7 +68,7 @@ IOOS QC test configurations are defined in [config.json](config.json). Below is 
 
 ## Run QC Checks
 
-See usage notes using the `--help` flag in [asv-ctd-qc.py](./asv-ctd-qc.py).
+See usage notes using the `--help` flag in [asv_ctd_qc.py](./asv_ctd_qc.py).
 
   ```sh
 usage: asv-ctd-qc.py [-h] [-l [LOG]] [-p] [-v] [-c] config input_file output_dir
@@ -93,7 +93,7 @@ options:
 ### Example QC Run
 
 ```sh
-docker run -it --rm -v "$(pwd)":/usr/local/app $(docker build -q -t asv-ctd .) python asv-ctd-qc.py -l ./logs/logfile.log -p -c -v config.json ./data/received/2022-10-07T19-45-27.0.txt ./data/processed
+docker run -it --rm -v "$(pwd)":/usr/local/app $(docker build -q -t asv-ctd .) python asv_ctd_qc.py -l ./logs/logfile.log -p -c -v config.json ./data/received/2022-10-07T19-45-27.0.txt ./data/processed
 ```
 
 Output from the above example will produce the following files:

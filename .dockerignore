@@ -1,6 +1,5 @@
 docs/
 examples/
 .venv/
-parameters/
 .pre-commit-config.yaml
 *cache*

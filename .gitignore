@@ -3,6 +3,7 @@ docs/
 examples/
 .venv/
 .env
+.config/
 .bash_history
 *cache*
 *logs*
