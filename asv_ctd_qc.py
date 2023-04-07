@@ -7,6 +7,7 @@ import datetime
 import json
 import logging
 import os
+import sys
 import typing
 
 import netCDF4 as nc  # noqa N813
@@ -28,13 +29,7 @@ from utils.compliance import Compliance
 
 # Keyword to look for indicating the start of the data column row
 INIT_COLUMN_ROW = "Date / Time"
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-formatter = logging.Formatter(
-    "%(asctime)s : %(msecs)04d : %(name)s : %(levelname)s : %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+# Log section separator
 LOGGER_SEPARATOR = "=" * 80
 
 
@@ -241,7 +236,7 @@ class Parameters(FileParser):
         times: np.ndarray,
         max_time_interval: int = 1,
     ) -> npt.ArrayLike:
-        """Sanity checks for timestamp arrays
+        """Sanity checks for timestamp arrays.
         Checks that the times supplied are in monotonically increasing
         chronological order, and optionally that time intervals between
         measurements do not exceed a value `max_time_interval`.  Note that this is
@@ -275,14 +270,12 @@ class NetCDF:
         outfile: str,
         data_model: str = "NETCDF4",
     ) -> None:
-        """_summary_.
-
+        """
         Args:
         ----
-            self (NetCDF): _description_
-            config (dict): _description_
-            outfile (str): _description_
-            data_model (str, optional): _description_. Defaults to "NETCDF4".
+            config (dict): QC configuration json/dict.
+            outfile (str): Output NetCDF file.
+            data_model (str, optional): Data model. Defaults to "NETCDF4".
         """
         self.filename = outfile
         self.data_model = data_model
@@ -315,12 +308,7 @@ class NetCDF:
                 setattr(self.rootgrp, arg, kwargs[arg])
 
     def create_dimensions(self: "NetCDF") -> None:
-        """_summary_.
-
-        Args:
-        ----
-            self (NetCDF): _description_
-        """
+        """Initialize the dataset dimensions."""
         self.rootgrp.createDimension("time", None)
 
     def create_ancillary_variables(
@@ -356,15 +344,14 @@ class NetCDF:
         test_name: str,
         variables: dict,
     ) -> None:
-        """_summary_.
+        """Write the varaible test results.
 
         Args:
         ----
-            self (NetCDF): _description_
-            data (pd.DataFrame): _description_
-            ancillary_variable (str): _description_
-            test_name (str): _description_
-            variables (dict): _description_
+            data (pd.DataFrame): Observations.
+            ancillary_variable (str): Base parameters.
+            test_name (str): Test name.
+            variables (dict): Test variables.
         """
         v = self.rootgrp.createVariable(
             test_name,
@@ -377,10 +364,6 @@ class NetCDF:
         v.flag_values = np.array([1, 2, 3, 4, 9], dtype=np.int8)
         v.flag_meanings = "GOOD NOT_EVALUATED SUSPECT BAD MISSING"
         for attr in variables:
-            # if attr == "valid_range":
-            #     # logger.info(attr)
-            #     logger.info(variables[attr])
-            #     input()
             if attr == "tinp" or variables[attr] is None:
                 continue
             elif type(variables[attr]) == pd.Series:  # noqa RET507
@@ -874,6 +857,13 @@ if __name__ == "__main__":
     verbose = args.verbose
     compliance_check = args.compliance_check
 
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter(
+        "%(asctime)s : %(msecs)04d : %(name)s : %(levelname)s : %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
     if verbose:
         logger.addHandler(logging.StreamHandler())
     if log:
@@ -887,11 +877,18 @@ if __name__ == "__main__":
         fh.setFormatter(formatter)
         logger.addHandler(fh)
 
-    asv_ctd_qc(
-        config_file=config_file,
-        input_file=input_file,
-        output_dir=output_dir,
-        plot=plot,
-        verbose=verbose,
-        compliance_check=compliance_check,
-    )
+    try:
+        asv_ctd_qc(
+            config_file=config_file,
+            input_file=input_file,
+            output_dir=output_dir,
+            plot=plot,
+            verbose=verbose,
+            compliance_check=compliance_check,
+        )
+    except Exception:
+        alert.send_alert(
+            subject="ASV CTD QC Alert",
+            body=f"QC workflow failed to run on input file {input_file}.",
+        )
+        sys.exit(1)
