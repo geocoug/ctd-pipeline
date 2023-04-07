@@ -798,6 +798,7 @@ def asv_ctd_qc(
     # Run IOOS_QC tests
     run_qc(config_json, parameters, ncfile)
 
+    logger.info(LOGGER_SEPARATOR)
     # Pretty print NetCDF file information, also store sections as variables
     nc_attrs, nc_dims, nc_vars = ncdump.ncdump(ncfile)
 
@@ -886,9 +887,9 @@ if __name__ == "__main__":
             verbose=verbose,
             compliance_check=compliance_check,
         )
-    except Exception:
+    except Exception as err:
         alert.send_alert(
             subject="ASV CTD QC Alert",
-            body=f"QC workflow failed to run on input file {input_file}.",
+            body=f"QC workflow failed to run on input file {input_file}.\n\n{err}",
         )
         sys.exit(1)
