@@ -2,8 +2,9 @@
 # MD013/line-length - Line length
 MD013:
   # Number of characters
-  line_length: 999
+  line_length: 9999
   heading_line_length: 100
   code_blocks: false
 MD033:
   allowed_elements: [img, a]
+MD036: false

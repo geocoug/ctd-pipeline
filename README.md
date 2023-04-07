@@ -173,3 +173,9 @@ Compliance checks can be run using the command line utility, or using Python via
 - [Writing NetCDF](https://www.earthinversion.com/utilities/Writing-NetCDF4-Data-using-Python/)
 - [Dimensions](http://www.bic.mni.mcgill.ca/users/sean/Docs/netcdf/guide.txn_12.html)
 - [Western Indian Ocean (WIO) Workshop](https://github.com/MathewBiddle/WIO_workshop)
+
+## Abstract
+
+**Data Management Workflow for Autonomous Surface Vehicle CTD Data: A Python-based Approach for Near Real-time Processing and Quality Control**
+
+The increasing deployment of autonomous surface vehicles (ASVs) for oceanographic research has led to a growing need for efficient and reliable data management workflows. This paper presents a Python-based workflow for handling and processing CTD (Conductivity, Temperature, and Depth) data collected by ASVs in near real-time. The workflow focuses on the conversion of raw CTD data files from ASCII format to the more versatile NetCDF format, which facilitates data sharing and interoperability among researchers and institutions. Additionally, the workflow incorporates quality control measures based on the Quality Assurance of Real-Time Oceanographic Data (QARTOD) recommendations provided by the Integrated Ocean Observing System (IOOS). These measures ensure that the processed CTD data is accurate and reliable for further analysis and interpretation. The proposed workflow demonstrates a robust and efficient approach to managing ASV CTD data, streamlining the data processing pipeline and promoting the use of high-quality oceanographic data in research and decision-making processes.
