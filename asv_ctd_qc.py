@@ -14,6 +14,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 
+import utils.alert as alert
 import utils.ncdump as ncdump
 import utils.qc_plots as qc_plots
 from ioos_qc import qartod
@@ -344,7 +345,7 @@ class NetCDF:
             if attr != "dtype":
                 setattr(v, attr, variables[attr])
         if variables["standard_name"] == "time":
-            v[:] = data.to_numpy().astype("datetime64[ns]")
+            v[:] = data.to_numpy().astype("datetime64[s]")
         else:
             v[:] = data.to_numpy()
 
@@ -588,6 +589,7 @@ def run_qc(
             variable_config["qartod"]["climatology_test"]["zinp"] = parameters.df[
                 "depth"
             ].to_numpy()
+
             season, window_start, window_end = current_time_window()
             ncfile.add_metadata(
                 season=season,
@@ -809,11 +811,6 @@ def asv_ctd_qc(
             config_json["parameters"][parameter],
         )
 
-    # REMOVE THIS!!!!
-    # Purpose is to set collection date to something closer to now
-    # so climatology tests pass.
-    # parameters.df["time"] = parameters.df["time"] + pd.DateOffset(months=7)
-
     logger.info(LOGGER_SEPARATOR)
     # Run IOOS_QC tests
     run_qc(config_json, parameters, ncfile)
@@ -859,6 +856,9 @@ def asv_ctd_qc(
             ),
         },
     )
+
+    # Alert staff on successful data exchange or critical issues.
+    alert.main(input_file=input_file)
 
 
 if __name__ == "__main__":
