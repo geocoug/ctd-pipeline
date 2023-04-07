@@ -11,7 +11,7 @@ load_dotenv()
 PASSWORD = os.getenv("PASSWORD")
 SUBJECT = "ASV CTD QC Alert"
 SENDER = "grantcaleb22@gmail.com"
-RECIPIENTS = ["grantcaleb22@gmail.com"]
+RECIPIENTS = ["cgrant@integral-corp.com"]
 
 
 def send_alert(
@@ -69,13 +69,12 @@ def check_ncfile(input_file: str, ncfile: str) -> tuple[bool, str | None]:
     return False, None
 
 
-def main(input_file: str) -> None:
+def main(input_file: str, ncfile: str) -> None:
     if not os.path.exists(input_file):
         send_alert(
             SUBJECT,
             f"Observation file {input_file} is corrupt.",
         )
-    ncfile = f"{input_file}.nc".replace("received", "processed")
     error, message = check_ncfile(input_file, ncfile)
     if error:
         if message:

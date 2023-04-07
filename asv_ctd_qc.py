@@ -841,7 +841,7 @@ def asv_ctd_qc(
     )
 
     # Alert staff on successful data exchange or critical issues.
-    alert.main(input_file=input_file)
+    alert.main(input_file=input_file, ncfile=out_ncfile)
 
 
 if __name__ == "__main__":
