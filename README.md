@@ -6,7 +6,7 @@ Convert CTD data files from ASCII to NetCDF and flag observations using [QARTOD]
 
 ## Setup
 
-Using [Python](https://www.python.org/downloads/release/python-3100/) version 3.10:
+### Python (v3.10)
 
   ```sh
   python -m venv .venv && \  # Create virtual environment
@@ -14,7 +14,12 @@ Using [Python](https://www.python.org/downloads/release/python-3100/) version 3.
   pip install -r requirements.txt  # Install dependencies
   ```
 
-  > [ioos_qc](https://github.com/ioos/ioos_qc) was cloned to the current repository on version 2.1.0 and modified for project requirements. See the [notes](#notes) section for specifics.
+### Docker
+
+```sh
+# Build the Docker image
+docker build -t asv-ctd .
+```
 
 ## Configure QC Test Parameters
 
@@ -71,7 +76,7 @@ IOOS QC test configurations are defined in [config.json](config.json). Below is 
 See usage notes using the `--help` flag in [asv_ctd_qc.py](./asv_ctd_qc.py).
 
   ```sh
-usage: asv-ctd-qc.py [-h] [-l [LOG]] [-p] [-v] [-c] config input_file output_dir
+usage: asv_ctd_qc.py [-h] [-l [LOG]] [-p] [-v] [-c] config input_file output_dir
 
 Evaulate a data file of ASV CTD readings and apply quality assurence checks following QARTOD methods and
 assigning data quality flags as appropriate. Transform results into NetCDF format following IC standards.
@@ -105,7 +110,7 @@ Output from the above example will produce the following files:
 
 ## Plotting QC Flags
 
-Visualize observations and QC flags together using [qc_plots.py](./utils/qc_plots.py). It is also built in to [asv-ctd-qc.py](./asv-ctd-qc.py) as an optional argument.
+Visualize observations and QC flags together using [qc_plots.py](./utils/qc_plots.py). It is also built in to [asv_ctd_qc.py](./asv_ctd_qc.py) as an optional argument.
 
 ```sh
 usage: qc_plots.py [-h] [-v] ncfile outdir
@@ -123,13 +128,13 @@ options:
 
 ## Dumping NetCDF Contents
 
-The `netcdf` package shows details of file contents, which can be downloaded using the `homebrew` or `apt` package managers. Likewise, use the [ncdump.py](./utils/ncdump.py) utility with Python. [ncdump.py](./utils/ncdump.py) is built in to [asv-ctd-qc.py](./asv-ctd-qc.py) as an optional argument.
+The `netcdf` package shows details of file contents, which can be downloaded using the `homebrew` or `apt` package managers. Likewise, use the [ncdump.py](./utils/ncdump.py) utility with Python. [ncdump.py](./utils/ncdump.py) is built in to [asv_ctd_qc.py](./asv_ctd_qc.py) as an optional argument.
 
 ## CF Compliance Checks
 
 > The [IOOS Compliance Checker](https://github.com/ioos/compliance-checker) is a python based tool for data providers to check for completeness and community standard compliance of local or remote netCDF files against CF and ACDD file standards. The python module can be used as a command-line tool or as a library that can be integrated into other software.
 
-Compliance checks can be run using the command line utility, or using Python via [compliance.py](./utils/compliance.py). Compliance checks are also built in to [asv-ctd-qc.py](./asv-ctd-qc.py) as an optional argument.
+Compliance checks can be run using the command line utility, or using Python via [compliance.py](./utils/compliance.py). Compliance checks are also built in to [asv_ctd_qc.py](./asv-ctd_qc.py) as an optional argument.
 
 ## Notes
 
