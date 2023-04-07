@@ -5,6 +5,7 @@
 Generate plot figures of parameters and QC flags in a NetCDF file.
 """
 import argparse
+import datetime
 import logging
 import os
 
@@ -39,7 +40,9 @@ def plot_results(
         test_name (str): Name of QC test.
         outdir (str): Output directory to save plot.
     """
-    time = data["time"]
+    # time = data["time"]
+    # Make timestamps more human readable
+    time = [datetime.datetime.fromtimestamp(x) for x in data["time"].values]
     obs = data[variable_name]
     qc_test = results[test_name]
 
