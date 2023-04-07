@@ -8,7 +8,7 @@ exclude: |
 repos:
   # Protect secrets using Gitleaks
   - repo: https://github.com/zricethezav/gitleaks
-    rev: v8.15.3
+    rev: v8.16.2
     hooks:
       - id: gitleaks
   # Supported base hooks
@@ -26,7 +26,7 @@ repos:
       - id: trailing-whitespace
   # YAML linter
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.29.0
+    rev: v1.30.0
     hooks:
       - id: yamllint
         args: [--config-file, ./.github/linters/.yaml-lint.yml]
@@ -44,13 +44,13 @@ repos:
         args: [--py36-plus]
   # Opinionated code styling
   - repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: 23.3.0
     hooks:
       - id: black
   # PEP 8 style guide, error and complexity checks
   # Replaces Flake8, isort, pydocstyle, pyupgrade, bandit, and autoflake
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.243
+    rev: v0.0.261
     hooks:
       - id: ruff
         args: [--config=./.github/linters/ruff.toml]
