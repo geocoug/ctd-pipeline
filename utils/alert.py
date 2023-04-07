@@ -17,18 +17,15 @@ RECIPIENTS = ["grantcaleb22@gmail.com"]
 def send_alert(
     subject: str,
     body: str,
-    sender: str,
-    recipients: list | tuple,
-    password: str,
 ) -> None:
     msg = MIMEText(body)
     msg["Subject"] = subject
-    msg["From"] = sender
-    msg["To"] = ", ".join(recipients)
+    msg["From"] = SENDER
+    msg["To"] = ", ".join(RECIPIENTS)
     try:
         smtp_server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
-        smtp_server.login(sender, password)
-        smtp_server.sendmail(sender, recipients, msg.as_string())
+        smtp_server.login(SENDER, PASSWORD)
+        smtp_server.sendmail(SENDER, RECIPIENTS, msg.as_string())
         smtp_server.quit()
     except Exception:
         raise
@@ -77,19 +74,16 @@ def main(input_file: str) -> None:
         send_alert(
             SUBJECT,
             f"Observation file {input_file} is corrupt.",
-            SENDER,
-            RECIPIENTS,
-            PASSWORD,
         )
     ncfile = f"{input_file}.nc".replace("received", "processed")
     error, message = check_ncfile(input_file, ncfile)
     if error:
         if message:
-            send_alert(SUBJECT, message, SENDER, RECIPIENTS, PASSWORD)
+            send_alert(SUBJECT, message)
     else:
         subject = "ASV CTD Cast Received"
         message = f"Cast observations for {input_file} have been received and a QC file has been generated at {ncfile}."  # noqa
-        send_alert(subject, message, SENDER, RECIPIENTS, PASSWORD)
+        send_alert(subject, message)
 
 
 def clparser() -> argparse.ArgumentParser:
