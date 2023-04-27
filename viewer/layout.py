@@ -14,9 +14,9 @@ def grid() -> list:
                         dbc.Row(
                             [
                                 dbc.Col(
-                                    html.H2(
+                                    html.H3(
                                         "ASV CTD Data Viewer",
-                                        className="p-3 mx-auto my-auto",
+                                        className="p-2 mx-auto my-auto",
                                         style={"color": "#c8d3d5"},
                                     ),
                                     className="col justify-content-center text-center",
@@ -42,7 +42,12 @@ def grid() -> list:
                                         options(),
                                     ),
                                 ],
-                                className="p-3",
+                                className="p-1",
+                            ),
+                        ),
+                        dbc.Row(
+                            html.Div(
+                                id="map-container",
                             ),
                         ),
                         dbc.Row(
@@ -135,7 +140,7 @@ def options() -> list:
                         ],
                         id="qc-dropdown-container",
                         className="p-2",
-                        style={"display": "none"},
+                        # style={"display": "none"},
                     ),
                 ),
             ],
@@ -149,9 +154,10 @@ def index() -> list:
     """Create index page content."""
     return [
         dbc.Container(
-            html.Div(
-                grid(),
-            ),
+            [
+                html.Div(id="test"),
+                html.Div(grid()),
+            ],
             fluid=True,
         ),
     ]

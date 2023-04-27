@@ -18,6 +18,11 @@ from dash.dependencies import Input, Output, State
 
 import viewer.layout as layout
 
+MAPBOX_TOKEN = os.getenv("MAPBOX_TOKEN")
+px.set_mapbox_access_token(MAPBOX_TOKEN)
+COLOR_SCALE = px.colors.sequential.Bluered
+
+
 config = configparser.ConfigParser()
 if os.getenv("APP_DIR"):
     config.read(os.path.join(os.getenv("APP_DIR"), "viewer/config.ini"))
@@ -44,14 +49,16 @@ def display_page(pathname: str):  # noqa
     return dash.no_update
 
 
+# Set datafile dropdown options and default value
 @dash.callback(
     Output("datafile-dropdown", "options"),
+    Output("datafile-dropdown", "value"),
     Input("url", "pathname"),
 )
 def datafile_options(pathname: str):  # noqa
     """Page content based on current path."""
     if pathname == "/":
-        return [
+        options = [
             {"label": file, "value": os.path.join(ncfile_dir, file)}
             for file in sorted(os.listdir(ncfile_dir))
             if (
@@ -59,11 +66,15 @@ def datafile_options(pathname: str):  # noqa
                 and os.path.splitext(file)[-1] == ".nc"
             )
         ]
-    return dash.no_update
+        return options, options[-1]["value"]
+    return dash.no_update, dash.no_update
 
 
+# Set parameter dropdown options and default value
 @dash.callback(
     Output("parameter-dropdown", "options"),
+    Output("parameter-dropdown", "value"),
+    Output("map-container", "children"),
     Output("datafile-metadata", "children"),
     Input("datafile-dropdown", "value"),
 )
@@ -91,26 +102,67 @@ def parameter_options(file: str):  # noqa
             responsive=True,
             color="secondary",
         )
+
+        # https://plotly.com/python/scattermapbox/
+        lat = float(sum(data["latitude"].values) / len(data["latitude"].values))
+        lon = float(sum(data["longitude"]) / len(data["longitude"]))
+        mapfig = go.Figure(
+            go.Scattermapbox(
+                lat=[lat],
+                lon=[lon],
+                marker=go.scattermapbox.Marker(
+                    size=12,
+                ),
+            ),
+        )
+        mapfig.update_layout(
+            autosize=True,
+            hovermode="closest",
+            showlegend=False,
+            mapbox=dict(
+                style="light",
+                accesstoken=MAPBOX_TOKEN,
+                zoom=8,
+                center=dict(
+                    lat=lat,
+                    lon=lon,
+                ),
+            ),
+            margin=dict(l=10, r=10, b=10, t=10),
+        )
+        parameters = sorted(
+            [
+                name
+                for name in data.cf.standard_names
+                if (
+                    "status_flag" not in name
+                    and name not in ["depth", "time", "latitude", "longitude"]
+                )
+            ],
+        )
+        default_parameter = parameters[0]
+        for parameter in parameters:
+            if "temperature" in parameter:
+                default_parameter = parameter
         return (
-            sorted(
-                [
-                    name
-                    for name in data.cf.standard_names
-                    if (
-                        "status_flag" not in name
-                        and name not in ["depth", "time", "latitude", "longitude"]
-                    )
-                ],
+            parameters,
+            default_parameter,
+            dcc.Graph(
+                figure=mapfig,
+                id="map-figure",
+                style={
+                    "height": "180px",
+                },
             ),
             attributes,
         )
 
-    return dash.no_update, None
+    return dash.no_update, None, None, None
 
 
 @dash.callback(
     Output("qc-dropdown", "options"),
-    Output("qc-dropdown-container", "style"),
+    Output("qc-dropdown", "value"),
     Input("qc-flag-switch", "value"),
     Input("parameter-dropdown", "value"),
     State("datafile-dropdown", "value"),
@@ -120,17 +172,15 @@ def qc_options(qc_flags: str, parameter: str, file: str):  # noqa
         if len(qc_flags) > 0:
             if parameter:
                 data = xr.open_dataset(file, decode_times=False)
-                return (
-                    sorted(
-                        [
-                            qc.replace(f"{parameter}_", "")
-                            for qc in data.cf.standard_names[f"{parameter} status_flag"]
-                        ],
-                    ),
-                    None,
+                qc_tests = sorted(
+                    [
+                        qc.replace(f"{parameter}_", "")
+                        for qc in data.cf.standard_names[f"{parameter} status_flag"]
+                    ],
                 )
+                return qc_tests, qc_tests[-1]
             return None, None
-    return None, {"display": "none"}
+    return None, None
 
 
 @dash.callback(
@@ -158,10 +208,11 @@ def generate_plots(datafile, parameter, include_qc, qc_type):  # noqa
         y=data["latitude"],
         z=-data["depth"],
         color=data[parameter],
+        color_continuous_scale=COLOR_SCALE,
     )
     fig_3d.update_layout(
         coloraxis_colorbar=dict(
-            title=units,
+            title=f"<b>{units}</b>",
             # https://plotly.com/python/colorscales/
             lenmode="pixels",
             len=300,
@@ -169,23 +220,21 @@ def generate_plots(datafile, parameter, include_qc, qc_type):  # noqa
     )
 
     # Create 2d plot
-    fig_2d = go.Figure()
-    fig_2d.add_trace(
-        go.Scatter(
-            x=time,
-            y=obs,
-            name="obs",
-            mode="markers",
-            opacity=1,
-            marker=dict(size=4, color="#637c8a"),
-        ),
+    fig_2d = px.scatter(
+        x=time,
+        y=-data["depth"].values,
+        color=obs,
+        color_continuous_scale=COLOR_SCALE,
     )
     fig_2d.update_layout(
-        yaxis_title=f"<b>{units}</b>",
+        yaxis_title="<b>depth</b>",
         xaxis_title="<b>time</b>",
         margin=dict(l=10, r=10, b=10, t=10),
-        legend=dict(
-            y=0.6,
+        coloraxis_colorbar=dict(
+            title=f"<b>{units}</b>",
+            y=0.5,
+            lenmode="pixels",
+            len=300,
         ),
     )
 
@@ -196,6 +245,27 @@ def generate_plots(datafile, parameter, include_qc, qc_type):  # noqa
             qc_notrun = np.ma.masked_where(qc_test != 2, obs).filled(np.nan)
             qc_suspect = np.ma.masked_where(qc_test != 3, obs).filled(np.nan)
             qc_fail = np.ma.masked_where(qc_test != 4, obs).filled(np.nan)
+
+            # Create 2d plot
+            fig_2d = go.Figure()
+            fig_2d.add_trace(
+                go.Scatter(
+                    x=time,
+                    y=obs,
+                    name="obs",
+                    mode="markers",
+                    opacity=1,
+                    marker=dict(size=4, color="#637c8a"),
+                ),
+            )
+            fig_2d.update_layout(
+                yaxis_title=f"<b>{units}</b>",
+                xaxis_title="<b>time</b>",
+                margin=dict(l=10, r=10, b=10, t=10),
+                legend=dict(
+                    y=0.6,
+                ),
+            )
 
             fig_2d.add_trace(
                 go.Scatter(

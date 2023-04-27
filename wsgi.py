@@ -3,8 +3,11 @@ import logging
 import os
 import sys
 
-APP_DIR = "/usr/local/bin/asv-ctd-qc"
-os.environ["APP_DIR"] = APP_DIR
+from dotenv import load_dotenv
+
+load_dotenv()
+
+APP_DIR = os.getenv("APP_DIR")
 
 logging.basicConfig(stream=sys.stderr)
 sys.path.insert(0, APP_DIR)
