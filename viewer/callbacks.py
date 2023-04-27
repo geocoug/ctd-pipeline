@@ -163,15 +163,8 @@ def generate_plots(datafile, parameter, include_qc, qc_type):  # noqa
         coloraxis_colorbar=dict(
             title=units,
             # https://plotly.com/python/colorscales/
-            # thicknessmode="pixels",
-            # thickness=50,
             lenmode="pixels",
             len=300,
-            # yanchor="top",
-            # y=1,
-            # ticks="outside",
-            # ticksuffix=" bills",
-            # dtick=5,
         ),
     )
 
@@ -192,9 +185,7 @@ def generate_plots(datafile, parameter, include_qc, qc_type):  # noqa
         xaxis_title="<b>time</b>",
         margin=dict(l=10, r=10, b=10, t=10),
         legend=dict(
-            # yanchor="top",
             y=0.6,
-            # xanchor="right",
         ),
     )
 

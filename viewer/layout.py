@@ -56,6 +56,7 @@ def grid() -> list:
                                     ),
                                 ],
                             ),
+                            className="my-auto mt-2",
                         ),
                     ],
                     className="col-xl-4 col-lg-5 col-12",
@@ -70,21 +71,12 @@ def grid() -> list:
                     [
                         dbc.Row(
                             id="3d-figure-container",
-                            style={
-                                "height": "45vh",
-                            },
                         ),
                         dbc.Row(
                             html.Hr(),
-                            style={
-                                "height": "10vh",
-                            },
                         ),
                         dbc.Row(
                             id="2d-figure-container",
-                            style={
-                                "height": "45vh",
-                            },
                         ),
                     ],
                     className="col-xl-8 col-lg-7 col-12",
@@ -160,7 +152,6 @@ def index() -> list:
             html.Div(
                 grid(),
             ),
-            # html.Div(id="test"),
             fluid=True,
         ),
     ]
