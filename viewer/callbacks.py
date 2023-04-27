@@ -19,7 +19,10 @@ from dash.dependencies import Input, Output, State
 import viewer.layout as layout
 
 config = configparser.ConfigParser()
-config.read(os.path.join(os.path.dirname(__file__), "config.ini"))
+if os.getenv("APP_DIR"):
+    config.read(os.path.join(os.getenv("APP_DIR"), "viewer/config.ini"))
+else:
+    config.read(os.path.join(os.path.dirname(__file__), "config.ini"))
 
 if "data" in config.sections():
     if "ncfile_dir" in config["data"]:
