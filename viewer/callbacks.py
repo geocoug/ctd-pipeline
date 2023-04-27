@@ -15,8 +15,15 @@ import plotly.graph_objs as go
 import xarray as xr
 from dash import dcc
 from dash.dependencies import Input, Output, State
+from dotenv import load_dotenv
 
 import viewer.layout as layout
+
+APP_DIR = os.getenv("APP_DIR")
+if not APP_DIR:
+    APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+load_dotenv(os.path.join(APP_DIR, ".env"))
 
 MAPBOX_TOKEN = os.getenv("MAPBOX_TOKEN")
 px.set_mapbox_access_token(MAPBOX_TOKEN)
@@ -24,10 +31,7 @@ COLOR_SCALE = px.colors.sequential.Bluered
 
 
 config = configparser.ConfigParser()
-if os.getenv("APP_DIR"):
-    config.read(os.path.join(os.getenv("APP_DIR"), "viewer/config.ini"))
-else:
-    config.read(os.path.join(os.path.dirname(__file__), "config.ini"))
+config.read(os.path.join(APP_DIR, "viewer/config.ini"))
 
 if "data" in config.sections():
     if "ncfile_dir" in config["data"]:
