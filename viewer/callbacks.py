@@ -233,7 +233,7 @@ def generate_plots(datafile, parameter, include_qc, qc_type):  # noqa
     fig_2d.update_layout(
         yaxis_title=f"<b>depth [{data['depth'].units}]</b>",
         xaxis_title="<b>time</b>",
-        margin=dict(l=10, r=10, b=10, t=10),
+        margin=dict(l=10, r=10, b=10, t=40),
         coloraxis_colorbar=dict(
             title=f"<b>{units}</b>",
             y=0.5,
