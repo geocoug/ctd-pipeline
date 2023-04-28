@@ -108,6 +108,10 @@ Output from the above example will produce the following files:
 - PNG files of every variable plotted against each QC check results. PNG files are compiled into a single HTML document for ease of viewing.
 - A log file containing script procedures. The same procedures are output to the console using `verbose` mode.
 
+### Alerts
+
+Automated emails are sent via [utils/alert.py](./utils/alert.py) after each QC run. The email will either contain a success message about the data file which has been processed, or an alert about a failed QC run, and detail on the Python exception which was raised.
+
 ## Plotting QC Flags
 
 Visualize observations and QC flags together using [qc_plots.py](./utils/qc_plots.py). It is also built in to [asv_ctd_qc.py](./asv_ctd_qc.py) as an optional argument.
@@ -124,6 +128,19 @@ positional arguments:
 options:
   -h, --help     show this help message and exit
   -v, --verbose  Control the amount of information to display.
+```
+
+## Data Viewer
+
+The **ASV CTD Data Viewer** ([https://asv.integral-corp.com](https://asv.integral-corp.com)) interactively displays processed CTD data from the cloud server. The viewer is connected to the processed data directory on the server (`/home/asv/L1`), which is set by the `ncfile_dir` variable in [viewer/config.ini](./viewer/config.ini).
+
+![Data viewer](./data-viewer.png)
+
+To run the data viewer locally for development, update the `ncfile_dir` variable, and run the application with [Gunicorn](https://gunicorn.org/):
+
+```sh
+source .venv/bin/activate && \
+gunicorn -b 0.0.0.0:5001 --reload viewer.app:dashboard
 ```
 
 ## Dumping NetCDF Contents
