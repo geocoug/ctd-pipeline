@@ -231,7 +231,7 @@ def generate_plots(datafile, parameter, include_qc, qc_type):  # noqa
         color_continuous_scale=COLOR_SCALE,
     )
     fig_2d.update_layout(
-        yaxis_title="<b>depth</b>",
+        yaxis_title=f"<b>depth [{data['depth'].units}]</b>",
         xaxis_title="<b>time</b>",
         margin=dict(l=10, r=10, b=10, t=10),
         coloraxis_colorbar=dict(
@@ -380,7 +380,7 @@ def generate_plots(datafile, parameter, include_qc, qc_type):  # noqa
         scene=dict(
             yaxis_title="<b>latitude</b>",
             xaxis_title="<b>longitude</b>",
-            zaxis_title="<b>depth</b>",
+            zaxis_title=f"<b>depth [{data['depth'].units}]</b>",
             aspectmode="manual",
             aspectratio=dict(x=1, y=1, z=0.5),
         ),
