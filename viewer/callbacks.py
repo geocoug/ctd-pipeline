@@ -109,7 +109,7 @@ def parameter_options(file: str):  # noqa
 
         # https://plotly.com/python/scattermapbox/
         lat = float(sum(data["latitude"].values) / len(data["latitude"].values))
-        lon = float(sum(data["longitude"]) / len(data["longitude"]))
+        lon = float(sum(data["longitude"].values) / len(data["longitude"].values))
         mapfig = go.Figure(
             go.Scattermapbox(
                 lat=[lat],
@@ -117,6 +117,10 @@ def parameter_options(file: str):  # noqa
                 marker=go.scattermapbox.Marker(
                     size=12,
                 ),
+                hoverinfo=None,
+                hovertext=[
+                    f"""<b>Start Time</b>: {datetime.fromtimestamp(data['time'].values[0])}<br><b>End Time</b>: {datetime.fromtimestamp(data['time'].values[-1])}""",  # noqa
+                ],
             ),
         )
         mapfig.update_layout(
