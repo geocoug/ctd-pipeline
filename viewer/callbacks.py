@@ -168,8 +168,8 @@ def parameter_options(file: str):  # , metadata):  # noqa
                 if attr not in ["season", "window_start", "window_end"]
             ],
         }
-        df_attrs["Attribute"].append(list(cast_attrs.keys()))
-        df_attrs["Description"].append(list(cast_attrs.values()))
+        df_attrs["Attribute"].extend(list(cast_attrs.keys()))
+        df_attrs["Description"].extend(list(cast_attrs.values()))
 
         metadata_table = dbc.Table.from_dataframe(
             # pd.DataFrame(metadata[sel_file]["metadata"]),
