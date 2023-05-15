@@ -2,7 +2,7 @@
 # layout.py
 
 import dash_bootstrap_components as dbc
-from dash import html
+from dash import dcc, html
 
 
 def grid() -> list:
@@ -44,7 +44,9 @@ def grid() -> list:
                                 ),
                             ],
                             className="p-2",
-                            style={"background-color": "#2c353a"},
+                            style={
+                                "background-color": "#2c353a",
+                            },
                         ),
                         dbc.Row(
                             html.Div(
@@ -62,24 +64,26 @@ def grid() -> list:
                             ),
                         ),
                         dbc.Row(
-                            html.Div(
-                                [
-                                    dbc.Row(
-                                        html.Div(
-                                            id="datafile-metadata",
-                                            className="mx-auto my-2",
+                            [
+                                html.Div(
+                                    [
+                                        dbc.Row(
+                                            html.Div(
+                                                id="datafile-metadata",
+                                                className="mx-auto m-2",
+                                            ),
                                         ),
-                                    ),
-                                ],
-                            ),
-                            className="my-auto mt-2",
+                                    ],
+                                ),
+                            ],
+                            className="my-auto mt-3",
                         ),
                     ],
                     className="col-xl-4 col-lg-5 col-12",
+                    id="sidebar",
                     style={
-                        "height": "100vh",
-                        "left": 0,
-                        "bottom": 0,
+                        "height": "100%",
+                        "min-height": "100vh",
                         "background-color": "#F5F5F5",
                     },
                 ),
@@ -87,12 +91,24 @@ def grid() -> list:
                     [
                         dbc.Row(
                             id="3d-figure-container",
+                            style={
+                                "min-height": "49vh",
+                                "height": "49%",
+                            },
                         ),
                         dbc.Row(
                             html.Hr(),
+                            style={
+                                "min-height": "2vh",
+                                "height": "2%",
+                            },
                         ),
                         dbc.Row(
                             id="2d-figure-container",
+                            style={
+                                "min-height": "48vh",
+                                "height": "48%",
+                            },
                         ),
                     ],
                     className="col-xl-8 col-lg-7 col-12",
@@ -151,7 +167,6 @@ def options() -> list:
                         ],
                         id="qc-dropdown-container",
                         className="p-2",
-                        # style={"display": "none"},
                     ),
                 ),
             ],
@@ -166,9 +181,10 @@ def index() -> list:
     return [
         dbc.Container(
             [
-                html.Div(id="test"),
                 html.Div(grid()),
             ],
             fluid=True,
         ),
+        dcc.Store(id="dataset"),
+        dcc.Store(id="metadata"),
     ]
