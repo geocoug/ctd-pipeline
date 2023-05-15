@@ -2,7 +2,8 @@
 # callbacks.py
 
 import configparser
-import json
+
+# import json
 import os
 from datetime import datetime
 
@@ -43,49 +44,49 @@ else:
     raise configparser.NoSectionError("data")
 
 
-def ncfile_metadata() -> dict:
-    metadata = {}
-    for file in os.listdir(ncfile_dir):
-        fpath = os.path.join(ncfile_dir, file)
-        if os.path.splitext(fpath)[-1] != ".nc":
-            continue
-        data = xr.open_dataset(os.path.join(ncfile_dir, file), decode_times=False)
-        file_metadata = {
-            attr: data.attrs[attr]
-            for attr in data.attrs
-            if attr not in ["season", "window_start", "window_end"]
-        }
-        file_metadata.update(
-            {
-                "Start Time": datetime.fromtimestamp(data["time"].values[0]).isoformat(
-                    sep=" ",
-                ),
-                "End Time": datetime.fromtimestamp(data["time"].values[-1]).isoformat(
-                    sep=" ",
-                ),
-                "Elapsed Time": f"""{(datetime.fromtimestamp(data['time'].values[-1])
-            - datetime.fromtimestamp(data['time'].values[0])).seconds} seconds""",
-                "Max Depth": f"{max(data['depth'].values)} [{data['depth'].units}]",
-            },
-        )
-        metadata.update(
-            {
-                file: {
-                    "metadata": {
-                        "Attribute": list(file_metadata.keys()),
-                        "Description": [file_metadata[key] for key in file_metadata],
-                    },
-                    "lat": float(
-                        sum(data["latitude"].values) / len(data["latitude"].values),
-                    ),
-                    "lon": float(
-                        sum(data["longitude"].values) / len(data["longitude"].values),
-                    ),
-                    **file_metadata,
-                },
-            },
-        )
-    return metadata
+# def ncfile_metadata() -> dict:
+#     metadata = {}
+#     for file in os.listdir(ncfile_dir):
+#         fpath = os.path.join(ncfile_dir, file)
+#         if os.path.splitext(fpath)[-1] != ".nc":
+#             continue
+#         data = xr.open_dataset(os.path.join(ncfile_dir, file), decode_times=False)
+#         file_metadata = {
+#             attr: data.attrs[attr]
+#             for attr in data.attrs
+#             if attr not in ["season", "window_start", "window_end"]
+#         }
+#         file_metadata.update(
+#             {
+#                 "Start Time": datetime.fromtimestamp(data["time"].values[0]).isoformat(  # noqa
+#                     sep=" ",
+#                 ),
+#                 "End Time": datetime.fromtimestamp(data["time"].values[-1]).isoformat(
+#                     sep=" ",
+#                 ),
+#                 "Elapsed Time": f"""{(datetime.fromtimestamp(data['time'].values[-1])
+#             - datetime.fromtimestamp(data['time'].values[0])).seconds} seconds""",
+#                 "Max Depth": f"{max(data['depth'].values)} [{data['depth'].units}]",
+#             },
+#         )
+#         metadata.update(
+#             {
+#                 file: {
+#                     "metadata": {
+#                         "Attribute": list(file_metadata.keys()),
+#                         "Description": [file_metadata[key] for key in file_metadata],
+#                     },
+#                     "lat": float(
+#                         sum(data["latitude"].values) / len(data["latitude"].values),
+#                     ),
+#                     "lon": float(
+#                         sum(data["longitude"].values) / len(data["longitude"].values),
+#                     ),
+#                     **file_metadata,
+#                 },
+#             },
+#         )
+#     return metadata
 
 
 @dash.callback(
@@ -103,7 +104,7 @@ def display_page(pathname: str):  # noqa
 @dash.callback(
     Output("datafile-dropdown", "options"),
     Output("datafile-dropdown", "value"),
-    Output("metadata", "data"),
+    # Output("metadata", "data"),
     Input("url", "pathname"),
 )
 def datafile_options(pathname: str):  # noqa
@@ -117,8 +118,8 @@ def datafile_options(pathname: str):  # noqa
                 and os.path.splitext(file)[-1] == ".nc"
             )
         ]
-        return options, options[-1]["value"], json.dumps(ncfile_metadata())
-    return dash.no_update, dash.no_update, dash.no_update
+        return options, options[-1]["value"]  # , json.dumps(ncfile_metadata())
+    return dash.no_update, dash.no_update  # , dash.no_update
 
 
 # Set parameter dropdown options and default value
@@ -129,15 +130,50 @@ def datafile_options(pathname: str):  # noqa
     Output("datafile-metadata", "children"),
     Output("dataset", "data"),
     Input("datafile-dropdown", "value"),
-    State("metadata", "data"),
+    # State("metadata", "data"),
 )
-def parameter_options(file: str, metadata):  # noqa
+def parameter_options(file: str):  # , metadata):  # noqa
     if file:
-        metadata = json.loads(metadata)
+        # metadata = json.loads(metadata)
         sel_file = os.path.basename(file)
         data = xr.open_dataset(file, decode_times=False)
+
+        metadata = {
+            attr: data.attrs[attr]
+            for attr in data.attrs
+            if attr not in ["season", "window_start", "window_end"]
+        }
+        cast_attrs = {
+            "Start Time": datetime.fromtimestamp(data["time"].values[0]).isoformat(
+                sep=" ",
+            ),
+            "End Time": datetime.fromtimestamp(data["time"].values[-1]).isoformat(
+                sep=" ",
+            ),
+            "Elapsed Time": f"""{(datetime.fromtimestamp(data['time'].values[-1])
+            - datetime.fromtimestamp(data['time'].values[0])).seconds} seconds""",
+            "Max Depth": f"{max(data['depth'].values)} [{data['depth'].units}]",
+        }
+        metadata.update(cast_attrs)
+
+        df_attrs = {
+            "Attribute": [
+                attr
+                for attr in data.attrs
+                if attr not in ["season", "window_start", "window_end"]
+            ],
+            "Description": [
+                data.attrs[attr]
+                for attr in data.attrs
+                if attr not in ["season", "window_start", "window_end"]
+            ],
+        }
+        df_attrs["Attribute"].append(list(cast_attrs.keys()))
+        df_attrs["Description"].append(list(cast_attrs.values()))
+
         metadata_table = dbc.Table.from_dataframe(
-            pd.DataFrame(metadata[sel_file]["metadata"]),
+            # pd.DataFrame(metadata[sel_file]["metadata"]),
+            pd.DataFrame(df_attrs),
             striped=True,
             bordered=True,
             hover=True,
@@ -148,23 +184,20 @@ def parameter_options(file: str, metadata):  # noqa
                 "overflowY": "scroll",
             },
         )
-        mapfig = go.Figure()
-        for ncfile in metadata:
-            mapfig.add_trace(
-                go.Scattermapbox(
-                    lat=[metadata[ncfile]["lat"]],
-                    lon=[metadata[ncfile]["lon"]],
-                    name=ncfile,
-                    marker=go.scattermapbox.Marker(
-                        size=12 if ncfile == sel_file else 9,
-                        color="red" if ncfile == sel_file else "blue",
-                        opacity=1 if ncfile == sel_file else 0.6,
-                    ),
-                    hoverinfo="skip",
-                    hovertemplate=None,
-                    # hovertext=f"""<b>File</b>: {sel_file}<br><b>Start Time</b>: {metadata[sel_file]["Start Time"]}<br><b>End Time</b>: {metadata[sel_file]["End Time"]}<br><b>Elapsed Time</b>: {metadata[sel_file]["Elapsed Time"]}<br><b>Max Depth</b>: {metadata[sel_file]["Max Depth"]}""",  # noqa
+        # https://plotly.com/python/scattermapbox/
+        lat = float(sum(data["latitude"].values) / len(data["latitude"].values))
+        lon = float(sum(data["longitude"].values) / len(data["longitude"].values))
+        mapfig = go.Figure(
+            go.Scattermapbox(
+                lat=[lat],
+                lon=[lon],
+                marker=go.scattermapbox.Marker(
+                    size=12,
                 ),
-            )
+                hoverinfo=None,
+                hovertext=f"""<b>File</b>: {sel_file}<br><b>Start Time</b>: {metadata["Start Time"]}<br><b>End Time</b>: {metadata["End Time"]}<br><b>Elapsed Time</b>: {metadata["Elapsed Time"]}<br><b>Max Depth</b>: {metadata["Max Depth"]}""",  # noqa
+            ),
+        )
         mapfig.update_layout(
             autosize=True,
             hovermode="closest",
@@ -174,8 +207,10 @@ def parameter_options(file: str, metadata):  # noqa
                 accesstoken=MAPBOX_TOKEN,
                 zoom=8,
                 center=dict(
-                    lat=metadata[sel_file]["lat"],
-                    lon=metadata[sel_file]["lon"],
+                    # lat=metadata[sel_file]["lat"],
+                    # lon=metadata[sel_file]["lon"],
+                    lat=lat,
+                    lon=lon,
                 ),
             ),
             margin=dict(l=5, r=5, b=5, t=5),
@@ -470,52 +505,52 @@ def generate_plots(datafile, parameter, include_qc, qc_type, data):  # noqa
     )
 
 
-@dash.callback(
-    Output("2d-figure", "figure"),
-    Output("3d-figure", "figure"),
-    Input("qc-flag-switch", "value"),
-    Input("2d-figure", "hoverData"),
-    Input("3d-figure", "hoverData"),
-    State("2d-figure", "figure"),
-    State("3d-figure", "figure"),
-)
-def hover_animations(include_qc, hover_2d, hover_3d, state_2d, state_3d):  # noqa
-    n_traces = 1
-    if include_qc and len(include_qc) > 0:
-        n_traces = 5
-    state_2d["data"] = state_2d["data"][:n_traces]
-    state_3d["data"] = state_3d["data"][:n_traces]
-    if hover_2d:
-        idx = hover_2d["points"][0]["pointNumber"]
-        state_3d["data"].append(
-            {
-                "x": [state_3d["data"][0]["x"][idx]],
-                "y": [state_3d["data"][0]["y"][idx]],
-                "z": [state_3d["data"][0]["z"][idx]],
-                "mode": "markers",
-                "marker": {
-                    "color": "#00fcff",
-                    "size": 12,
-                },
-                "showlegend": False,
-                "type": "scatter3d",
-            },
-        )
-        return dash.no_update, state_3d
-    if hover_3d:
-        idx = hover_3d["points"][0]["pointNumber"]
-        state_2d["data"].append(
-            {
-                "x": [state_2d["data"][0]["x"][idx]],
-                "y": [state_2d["data"][0]["y"][idx]],
-                "mode": "markers",
-                "marker": {
-                    "color": "#00fcff",
-                    "size": 12,
-                },
-                "showlegend": False,
-                "type": "scatter",
-            },
-        )
-        return state_2d, dash.no_update
-    return state_2d, state_3d
+# @dash.callback(
+#     Output("2d-figure", "figure"),
+#     Output("3d-figure", "figure"),
+#     Input("qc-flag-switch", "value"),
+#     Input("2d-figure", "hoverData"),
+#     Input("3d-figure", "hoverData"),
+#     State("2d-figure", "figure"),
+#     State("3d-figure", "figure"),
+# )
+# def hover_animations(include_qc, hover_2d, hover_3d, state_2d, state_3d):
+#     n_traces = 1
+#     if include_qc and len(include_qc) > 0:
+#         n_traces = 5
+#     state_2d["data"] = state_2d["data"][:n_traces]
+#     state_3d["data"] = state_3d["data"][:n_traces]
+#     if hover_2d:
+#         idx = hover_2d["points"][0]["pointNumber"]
+#         state_3d["data"].append(
+#             {
+#                 "x": [state_3d["data"][0]["x"][idx]],
+#                 "y": [state_3d["data"][0]["y"][idx]],
+#                 "z": [state_3d["data"][0]["z"][idx]],
+#                 "mode": "markers",
+#                 "marker": {
+#                     "color": "#00fcff",
+#                     "size": 12,
+#                 },
+#                 "showlegend": False,
+#                 "type": "scatter3d",
+#             },
+#         )
+#         return dash.no_update, state_3d
+#     if hover_3d:
+#         idx = hover_3d["points"][0]["pointNumber"]
+#         state_2d["data"].append(
+#             {
+#                 "x": [state_2d["data"][0]["x"][idx]],
+#                 "y": [state_2d["data"][0]["y"][idx]],
+#                 "mode": "markers",
+#                 "marker": {
+#                     "color": "#00fcff",
+#                     "size": 12,
+#                 },
+#                 "showlegend": False,
+#                 "type": "scatter",
+#             },
+#         )
+#         return state_2d, dash.no_update
+#     return state_2d, state_3d
