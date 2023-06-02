@@ -2,7 +2,7 @@
 import logging
 import sys
 
-APP_DIR = "/usr/local/bin/asv-ctd-qc"
+APP_DIR = "/usr/local/bin/ctd-pipeline"
 
 logging.basicConfig(stream=sys.stderr)
 sys.path.insert(0, APP_DIR)
